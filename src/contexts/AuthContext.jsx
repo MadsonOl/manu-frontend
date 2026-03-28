@@ -32,11 +32,9 @@ export function AuthProvider({ children }) {
     return signOut(auth);
   }
 
-  const valor = { usuario, login, logout, carregando };
-
   return (
-    <AuthContext.Provider value={valor}>
-      {children}
+    <AuthContext.Provider value={{ usuario, login, logout, carregando }}>
+      {!carregando && children}
     </AuthContext.Provider>
   );
 }
