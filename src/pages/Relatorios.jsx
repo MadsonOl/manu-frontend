@@ -19,7 +19,6 @@ export default function Relatorios() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    setLoading(true);
     api.get("/ordens-servico")
       .then((res) => setOrdens(res.data))
       .catch(() => showToast("Erro ao carregar relatórios", "error"))

@@ -28,7 +28,6 @@ export default function Dashboard() {
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
-    setLoadingStats(true);
     Promise.all([
       api.get("/chamados").catch(() => ({ data: [] })),
       api.get("/ordens-servico").catch(() => ({ data: [] })),

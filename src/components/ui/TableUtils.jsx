@@ -33,6 +33,7 @@ export function SkeletonRows({ cols }) {
   ));
 }
 
+// eslint-disable-next-line no-unused-vars -- Icon is used as JSX component
 export function GhostBtn({ icon: Icon, title, hoverColor, onClick }) {
   return (
     <button

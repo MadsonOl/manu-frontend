@@ -31,4 +31,19 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (import.meta.env.MODE === 'production') {
+      const status = error.response?.status;
+      const genericMessage =
+        status === 401 || status === 403
+          ? 'Sessão expirada. Faça login novamente.'
+          : 'Ocorreu um erro inesperado. Tente novamente mais tarde.';
+      return Promise.reject(new Error(genericMessage));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
