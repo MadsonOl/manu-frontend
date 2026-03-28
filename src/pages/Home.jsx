@@ -147,11 +147,11 @@ export default function Home() {
             <button type="submit" disabled={loading} style={{
               width: "100%",
               background: "var(--primary)", color: "#fff",
-              padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: 13, fontWeight: 500, border: "none",
+              padding: "12px 20px", borderRadius: "var(--radius-md)",
+              fontSize: 15, fontWeight: 600, border: "none",
               cursor: loading ? "not-allowed" : "pointer",
               transition: "var(--transition)",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               opacity: loading ? 0.7 : 1,
             }}
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--primary-dark)"; }}
@@ -177,15 +177,22 @@ export default function Home() {
         )}
       </div>
 
-      {/* Link discreto para /sobre */}
+      {/* Link para /sobre */}
       <Link to="/sobre" style={{
         marginTop: 24,
-        fontSize: 12,
-        color: "var(--text-3)",
+        fontSize: 14,
+        color: "var(--primary)",
         textDecoration: "none",
+        fontWeight: 500,
         transition: "var(--transition)",
         animation: "fadeIn 0.4s ease 0.2s backwards",
-      }}>
+        padding: "8px 16px",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--primary)",
+      }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary)"; e.currentTarget.style.color = "#fff"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--primary)"; }}
+      >
         Saiba mais sobre o manu
       </Link>
     </div>

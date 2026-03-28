@@ -205,11 +205,17 @@ export default function Profissionais() {
               </button>
             )}
             <button type="button" onClick={() => setModalFuncao(true)} style={{
-              background: "transparent", color: "var(--text-2)",
-              border: "none", fontSize: 13, cursor: "pointer",
-              transition: "var(--transition)",
-            }}>
-              Cadastrar nova função
+              background: "var(--surface-3)", color: "var(--text-1)",
+              border: "1px solid var(--border)", padding: "8px 16px",
+              borderRadius: "var(--radius-md)", fontSize: 13, fontWeight: 500,
+              cursor: "pointer", transition: "var(--transition)",
+              display: "flex", alignItems: "center", gap: 6,
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; e.currentTarget.style.color = "var(--primary)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-1)"; }}
+            >
+              <Plus size={15} />
+              Nova função
             </button>
           </div>
         </form>

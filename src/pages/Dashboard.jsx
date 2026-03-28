@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import {
-  ClipboardList, Wrench, BarChart2, Building2, HardHat, Settings,
+  ClipboardList, Wrench, BarChart2, Building2, HardHat,
   ChevronRight, Clock, CheckCircle,
 } from "lucide-react";
 
@@ -13,7 +13,6 @@ const modules = [
   { icon: BarChart2, label: "Relatórios", desc: "Gere relatórios filtrados das ordens de serviço", rota: "/relatorios" },
   { icon: Building2, label: "Empresas", desc: "Gerencie os dados das empresas cadastradas", rota: "/empresas" },
   { icon: HardHat, label: "Profissionais", desc: "Cadastre e gerencie os técnicos responsáveis", rota: "/profissionais" },
-  { icon: Settings, label: "Funções", desc: "Configure as funções dos profissionais", rota: "/profissionais" },
 ];
 
 const statCards = [
