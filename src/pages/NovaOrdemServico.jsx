@@ -2,35 +2,9 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
-import { ChevronRight, Save, ArrowLeft, Loader2 } from "lucide-react";
-
-const inputStyle = {
-  width: "100%",
-  background: "var(--surface-2)",
-  border: "1px solid var(--border)",
-  color: "var(--text-1)",
-  padding: "9px 12px",
-  borderRadius: "var(--radius-md)",
-  fontSize: 14,
-  fontFamily: "var(--font-sans)",
-  outline: "none",
-  transition: "var(--transition)",
-};
-
-const labelStyle = {
-  fontSize: 12, fontWeight: 500, color: "var(--text-2)",
-  textTransform: "uppercase", letterSpacing: "0.06em",
-  marginBottom: 6, display: "block",
-};
-
-function handleFocus(e) {
-  e.target.style.borderColor = "var(--primary)";
-  e.target.style.boxShadow = "0 0 0 3px var(--primary-ring)";
-}
-function handleBlur(e) {
-  e.target.style.borderColor = "var(--border)";
-  e.target.style.boxShadow = "none";
-}
+import Breadcrumb from "../components/ui/Breadcrumb";
+import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
+import { Save, ArrowLeft, Loader2 } from "lucide-react";
 
 export default function NovaOrdemServico() {
   const location = useLocation();
@@ -66,10 +40,10 @@ export default function NovaOrdemServico() {
         profissional: responsavel,
         chamado_id: chamado.id || null,
       });
-      showToast("Ordem de servico criada com sucesso", "success");
+      showToast("Ordem de serviço criada com sucesso", "success");
       navigate("/ordens-servico");
     } catch {
-      setErro("Erro ao cadastrar ordem de servico");
+      setErro("Erro ao cadastrar ordem de serviço");
       showToast("Erro ao cadastrar OS", "error");
     } finally {
       setLoading(false);
@@ -80,10 +54,12 @@ export default function NovaOrdemServico() {
     <div style={{ animation: "fadeIn 0.2s ease" }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
-          Dashboard <ChevronRight size={12} /> Ordens de Servico <ChevronRight size={12} /> Nova
-        </div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Nova Ordem de Servico</h1>
+        <Breadcrumb items={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Ordens de Serviço", to: "/ordens-servico" },
+          { label: "Nova" },
+        ]} />
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Nova Ordem de Serviço</h1>
       </div>
 
       {/* Form Card */}
@@ -113,7 +89,7 @@ export default function NovaOrdemServico() {
               style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
           </div>
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Descricao</label>
+            <label style={labelStyle}>Descrição</label>
             <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} required
               style={{ ...inputStyle, minHeight: 80, resize: "vertical" }}
               onFocus={handleFocus} onBlur={handleBlur} />
@@ -133,7 +109,7 @@ export default function NovaOrdemServico() {
               style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
           </div>
           <div style={{ marginBottom: 24 }}>
-            <label style={labelStyle}>Responsavel</label>
+            <label style={labelStyle}>Responsável</label>
             <select value={responsavel} onChange={(e) => setResponsavel(e.target.value)} required
               style={inputStyle} onFocus={handleFocus} onBlur={handleBlur}>
               <option value="">Selecione um profissional</option>
@@ -152,7 +128,10 @@ export default function NovaOrdemServico() {
               transition: "var(--transition)",
               display: "flex", alignItems: "center", gap: 6,
               opacity: loading ? 0.7 : 1,
-            }}>
+            }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--primary-dark)"; }}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+            >
               {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={15} />}
               Cadastrar OS
             </button>

@@ -1,40 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
 import {
-  Wrench, MapPin, FileText, AlertCircle, User, Send,
-  CheckCircle, Plus, Loader2, LogIn,
+  Lightbulb, Send, CheckCircle, Plus, Loader2,
 } from "lucide-react";
 
 const dotPattern = `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' opacity='0.03'/%3E%3C/svg%3E")`;
-
-const inputStyle = {
-  width: "100%",
-  background: "var(--surface-2)",
-  border: "1px solid var(--border)",
-  color: "var(--text-1)",
-  padding: "9px 12px",
-  borderRadius: "var(--radius-md)",
-  fontSize: 14,
-  fontFamily: "var(--font-sans)",
-  outline: "none",
-  transition: "var(--transition)",
-};
-
-const labelStyle = {
-  fontSize: 12, fontWeight: 500, color: "var(--text-2)",
-  textTransform: "uppercase", letterSpacing: "0.06em",
-  marginBottom: 6, display: "block",
-};
-
-function handleFocus(e) {
-  e.target.style.borderColor = "var(--primary)";
-  e.target.style.boxShadow = "0 0 0 3px var(--primary-ring)";
-}
-function handleBlur(e) {
-  e.target.style.borderColor = "var(--border)";
-  e.target.style.boxShadow = "none";
-}
 
 export default function Home() {
   const [local, setLocal] = useState("");
@@ -68,7 +40,7 @@ export default function Home() {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      minHeight: "calc(100vh - 56px)",
       background: "var(--bg)",
       backgroundImage: dotPattern,
       display: "flex",
@@ -78,27 +50,6 @@ export default function Home() {
       padding: 24,
       position: "relative",
     }}>
-      {/* Botao Acesso gestor — canto superior direito */}
-      <Link to="/login" style={{
-        position: "absolute",
-        top: 16,
-        right: 20,
-        textDecoration: "none",
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        color: "var(--text-3)",
-        fontSize: 12,
-        padding: "5px 10px",
-        borderRadius: "var(--radius-md)",
-        border: "1px solid var(--border-subtle)",
-        transition: "var(--transition)",
-        background: "transparent",
-      }}>
-        <LogIn size={12} />
-        Acesso gestor
-      </Link>
-
       {/* Logo centralizado */}
       <div style={{
         display: "flex",
@@ -107,7 +58,7 @@ export default function Home() {
         marginBottom: 6,
         animation: "fadeIn 0.3s ease",
       }}>
-        <Wrench size={18} style={{ color: "var(--primary)" }} />
+        <Lightbulb size={18} style={{ color: "var(--primary)" }} />
         <span style={{ fontWeight: 700, fontSize: 24, color: "var(--primary)" }}>manu</span>
       </div>
 
@@ -117,10 +68,10 @@ export default function Home() {
         marginBottom: 32,
         animation: "fadeIn 0.3s ease",
       }}>
-        Registre sua solicitacao de manutencao
+        Registre sua solicitação de manutenção
       </div>
 
-      {/* Card do formulario */}
+      {/* Card do formulário */}
       <div style={{
         background: "var(--surface-1)",
         border: "1px solid var(--border)",
@@ -172,7 +123,7 @@ export default function Home() {
                 style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Descricao</label>
+              <label style={labelStyle}>Descrição</label>
               <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} required
                 placeholder="Descreva o problema..."
                 style={{ ...inputStyle, minHeight: 80, resize: "vertical" }}
@@ -202,7 +153,10 @@ export default function Home() {
               transition: "var(--transition)",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
               opacity: loading ? 0.7 : 1,
-            }}>
+            }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--primary-dark)"; }}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+            >
               {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} />}
               Enviar chamado
             </button>

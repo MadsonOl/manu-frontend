@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Wrench, Mail, Lock, LogIn, Loader2 } from "lucide-react";
+import { Lightbulb, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 
 const dotPattern = `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' opacity='0.03'/%3E%3C/svg%3E")`;
 
@@ -22,7 +22,7 @@ export default function Login() {
       navigate("/dashboard");
     } catch (err) {
       if (err.code === "auth/user-not-found") {
-        setErro("E-mail nao cadastrado");
+        setErro("E-mail não cadastrado");
       } else if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
         setErro("Senha incorreta");
       } else {
@@ -35,7 +35,7 @@ export default function Login() {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      minHeight: "calc(100vh - 56px)",
       background: "var(--bg)",
       backgroundImage: dotPattern,
       display: "flex",
@@ -55,7 +55,7 @@ export default function Login() {
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 32 }}>
-          <Wrench size={16} style={{ color: "var(--primary)" }} />
+          <Lightbulb size={16} style={{ color: "var(--primary)" }} />
           <span style={{ fontWeight: 700, fontSize: 20, color: "var(--primary)" }}>manu</span>
         </div>
 

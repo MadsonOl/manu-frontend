@@ -7,21 +7,21 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
+  console.log("[api] auth.currentUser:", user ? user.email : "null");
+
   if (user) {
-    const token = await user.getIdToken(true);
-    config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const token = await user.getIdToken();
+      console.log("[api] token obtido:", token.substring(0, 30) + "...");
+      config.headers.Authorization = `Bearer ${token}`;
+    } catch (err) {
+      console.error("[api] erro ao obter token:", err);
+    }
+  } else {
+    console.warn("[api] usuario nao autenticado, requisicao sem token");
   }
+
   return config;
 });
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default api;

@@ -1,5 +1,5 @@
 :root {
-  /* Superficies */
+  /* Superfícies */
   --bg:           #0D0D0F;
   --surface-1:    #141416;
   --surface-2:    #1A1A1E;
@@ -8,7 +8,7 @@
   --border:       #2A2A30;
   --border-subtle:#1E1E24;
 
-  /* Primaria */
+  /* Primária */
   --primary:      #4A90D9;
   --primary-dark: #357ABD;
   --primary-muted:rgba(74,144,217,0.12);
@@ -45,7 +45,7 @@
   --radius-lg: 14px;
   --radius-xl: 20px;
 
-  /* Transicoes */
+  /* Transições */
   --transition: all 0.15s ease;
   --transition-slow: all 0.25s ease;
 }

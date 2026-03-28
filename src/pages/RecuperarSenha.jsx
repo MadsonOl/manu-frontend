@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
-import { Wrench, Mail, Send, MailCheck, ArrowLeft, Loader2 } from "lucide-react";
+import { Lightbulb, Mail, Send, MailCheck, ArrowLeft, Loader2 } from "lucide-react";
 
 const dotPattern = `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' opacity='0.03'/%3E%3C/svg%3E")`;
 
@@ -23,9 +23,9 @@ export default function RecuperarSenha() {
       setMensagem("E-mail enviado! Verifique sua caixa de entrada.");
     } catch (err) {
       if (err.code === "auth/user-not-found") {
-        setErro("E-mail nao cadastrado");
+        setErro("E-mail não cadastrado");
       } else {
-        setErro("Erro ao enviar e-mail de recuperacao. Tente novamente.");
+        setErro("Erro ao enviar e-mail de recuperação. Tente novamente.");
       }
     } finally {
       setLoading(false);
@@ -34,7 +34,7 @@ export default function RecuperarSenha() {
 
   return (
     <div style={{
-      minHeight: "100vh",
+      minHeight: "calc(100vh - 56px)",
       background: "var(--bg)",
       backgroundImage: dotPattern,
       display: "flex",
@@ -53,7 +53,7 @@ export default function RecuperarSenha() {
         animation: "fadeIn 0.3s ease",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 32 }}>
-          <Wrench size={16} style={{ color: "var(--primary)" }} />
+          <Lightbulb size={16} style={{ color: "var(--primary)" }} />
           <span style={{ fontWeight: 700, fontSize: 20, color: "var(--primary)" }}>manu</span>
         </div>
 
@@ -61,7 +61,7 @@ export default function RecuperarSenha() {
           Recuperar senha
         </h1>
         <p style={{ fontSize: 14, color: "var(--text-2)", marginBottom: 24, lineHeight: 1.5 }}>
-          Informe seu e-mail e enviaremos as instrucoes de recuperacao
+          Informe seu e-mail e enviaremos as instruções de recuperação
         </p>
 
         {erro && (
@@ -154,7 +154,7 @@ export default function RecuperarSenha() {
             }}
           >
             {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} />}
-            Enviar instrucoes
+            Enviar instruções
           </button>
         </form>
 

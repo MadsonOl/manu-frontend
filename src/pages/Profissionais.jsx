@@ -2,70 +2,12 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import Modal from "../components/Modal";
-import {
-  Plus, Trash2, Inbox, ChevronRight, ChevronLeft,
-} from "lucide-react";
-
-const inputStyle = {
-  width: "100%",
-  background: "var(--surface-2)",
-  border: "1px solid var(--border)",
-  color: "var(--text-1)",
-  padding: "9px 12px",
-  borderRadius: "var(--radius-md)",
-  fontSize: 14,
-  fontFamily: "var(--font-sans)",
-  outline: "none",
-  transition: "var(--transition)",
-};
-
-const labelStyle = {
-  fontSize: 12, fontWeight: 500, color: "var(--text-2)",
-  textTransform: "uppercase", letterSpacing: "0.06em",
-  marginBottom: 6, display: "block",
-};
-
-function GhostBtn({ icon: Icon, title, hoverColor, onClick }) {
-  return (
-    <button title={title} onClick={onClick}
-      style={{
-        background: "transparent", color: "var(--text-2)",
-        border: "none", padding: 6, borderRadius: "var(--radius-sm)",
-        cursor: "pointer", transition: "var(--transition)", display: "inline-flex",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3)"; e.currentTarget.style.color = hoverColor; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-2)"; }}
-    >
-      <Icon size={15} />
-    </button>
-  );
-}
-
-function SkeletonRows({ cols }) {
-  return Array.from({ length: 5 }).map((_, i) => (
-    <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-      {Array.from({ length: cols }).map((_, j) => (
-        <td key={j} style={{ padding: "13px 16px" }}>
-          <div style={{
-            background: "var(--surface-3)", borderRadius: "var(--radius-sm)",
-            height: 14, width: "80%",
-            animation: `skeletonPulse 1.4s ease infinite`,
-            animationDelay: `${0.1 * i}s`,
-          }} />
-        </td>
-      ))}
-    </tr>
-  ));
-}
-
-function handleFocus(e) {
-  e.target.style.borderColor = "var(--primary)";
-  e.target.style.boxShadow = "0 0 0 3px var(--primary-ring)";
-}
-function handleBlur(e) {
-  e.target.style.borderColor = "var(--border)";
-  e.target.style.boxShadow = "none";
-}
+import Breadcrumb from "../components/ui/Breadcrumb";
+import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
+import Pagination from "../components/ui/Pagination";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
+import { Plus, Trash2, Inbox, Pencil, X } from "lucide-react";
 
 export default function Profissionais() {
   const [profissionais, setProfissionais] = useState([]);
@@ -81,6 +23,8 @@ export default function Profissionais() {
   const [novaFuncao, setNovaFuncao] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [editando, setEditando] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const perPage = 10;
   const { showToast } = useToast();
 
@@ -110,26 +54,47 @@ export default function Profissionais() {
     }
   }
 
+  function iniciarEdicao(profissional) {
+    setEditando(profissional.id);
+    setNome(profissional.nome);
+    setTelefone(profissional.telefone);
+    setEmail(profissional.email);
+    setRg(profissional.rg);
+    setCpf(profissional.cpf);
+    setFuncao(profissional.funcao || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelarEdicao() {
+    setEditando(null);
+    setNome(""); setTelefone(""); setEmail("");
+    setRg(""); setCpf(""); setFuncao("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setErro("");
     try {
-      await api.post("/profissionais", { nome, telefone, email, rg, cpf, funcao });
-      setNome(""); setTelefone(""); setEmail(""); setRg(""); setCpf(""); setFuncao("");
+      const payload = { nome, telefone, email, rg, cpf, funcao };
+      if (editando) {
+        await api.put(`/profissionais/${editando}`, payload);
+        showToast("Profissional atualizado com sucesso", "success");
+      } else {
+        await api.post("/profissionais", payload);
+        showToast("Profissional cadastrado com sucesso", "success");
+      }
+      cancelarEdicao();
       carregarProfissionais();
-      showToast("Profissional cadastrado com sucesso", "success");
     } catch {
-      setErro("Erro ao cadastrar profissional");
-      showToast("Erro ao cadastrar profissional", "error");
+      setErro(editando ? "Erro ao atualizar profissional" : "Erro ao cadastrar profissional");
     }
   }
 
   async function excluir(id) {
-    if (!window.confirm("Deseja excluir este profissional?")) return;
     try {
       await api.delete(`/profissionais/${id}`);
       setProfissionais(profissionais.filter((p) => p.id !== id));
-      showToast("Profissional excluido com sucesso", "success");
+      showToast("Profissional excluído com sucesso", "success");
     } catch {
       showToast("Erro ao excluir profissional", "error");
     }
@@ -142,9 +107,9 @@ export default function Profissionais() {
       setNovaFuncao("");
       setModalFuncao(false);
       carregarFuncoes();
-      showToast("Funcao cadastrada com sucesso", "success");
+      showToast("Função cadastrada com sucesso", "success");
     } catch {
-      showToast("Erro ao cadastrar funcao", "error");
+      showToast("Erro ao cadastrar função", "error");
     }
   }
 
@@ -156,9 +121,10 @@ export default function Profissionais() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
-            Dashboard <ChevronRight size={12} /> Profissionais
-          </div>
+          <Breadcrumb items={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Profissionais" },
+          ]} />
           <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Profissionais</h1>
         </div>
       </div>
@@ -176,7 +142,7 @@ export default function Profissionais() {
           }}>{erro}</div>
         )}
         <form onSubmit={handleSubmit}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
               <label style={labelStyle}>Nome</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} required
@@ -203,10 +169,10 @@ export default function Profissionais() {
                 style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
-              <label style={labelStyle}>Funcao</label>
+              <label style={labelStyle}>Função</label>
               <select value={funcao} onChange={(e) => setFuncao(e.target.value)} required
                 style={inputStyle} onFocus={handleFocus} onBlur={handleBlur}>
-                <option value="">Selecione uma funcao</option>
+                <option value="">Selecione uma função</option>
                 {funcoes.map((f) => (
                   <option key={f.id} value={f.nome}>{f.nome}</option>
                 ))}
@@ -219,16 +185,31 @@ export default function Profissionais() {
               padding: "8px 16px", borderRadius: "var(--radius-md)",
               fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
               transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <Plus size={15} />
-              Cadastrar
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+            >
+              {editando ? <Pencil size={15} /> : <Plus size={15} />}
+              {editando ? "Salvar alterações" : "Cadastrar"}
             </button>
+            {editando && (
+              <button type="button" onClick={cancelarEdicao} style={{
+                background: "transparent", color: "var(--text-2)",
+                border: "1px solid var(--border)", padding: "8px 16px",
+                borderRadius: "var(--radius-md)", fontSize: 13, fontWeight: 500,
+                cursor: "pointer", transition: "var(--transition)",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <X size={15} />
+                Cancelar edição
+              </button>
+            )}
             <button type="button" onClick={() => setModalFuncao(true)} style={{
               background: "transparent", color: "var(--text-2)",
               border: "none", fontSize: 13, cursor: "pointer",
               transition: "var(--transition)",
             }}>
-              Cadastrar nova funcao
+              Cadastrar nova função
             </button>
           </div>
         </form>
@@ -243,12 +224,8 @@ export default function Profissionais() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                {["ID", "Nome", "Telefone", "E-mail", "RG", "CPF", "Funcao", "Acoes"].map((h) => (
-                  <th key={h} style={{
-                    fontSize: 11, fontWeight: 600, color: "var(--text-3)",
-                    textTransform: "uppercase", letterSpacing: "0.07em",
-                    padding: "12px 16px", textAlign: "left",
-                  }}>{h}</th>
+                {["ID", "Nome", "Telefone", "E-mail", "RG", "CPF", "Função", "Ações"].map((h) => (
+                  <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -258,7 +235,7 @@ export default function Profissionais() {
                   <td colSpan="8" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>Nenhum profissional cadastrado</div>
-                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>Use o formulario acima para cadastrar</div>
+                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>Use o formulário acima para cadastrar</div>
                   </td>
                 </tr>
               ) : paginated.map((p, i) => (
@@ -269,15 +246,16 @@ export default function Profissionais() {
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.id}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.nome}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.telefone}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.email}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.rg}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.cpf}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{p.funcao}</td>
-                  <td style={{ padding: "13px 16px" }}>
-                    <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => excluir(p.id)} />
+                  <td style={tdStyle}>{p.id}</td>
+                  <td style={tdStyle}>{p.nome}</td>
+                  <td style={tdStyle}>{p.telefone}</td>
+                  <td style={tdStyle}>{p.email}</td>
+                  <td style={tdStyle}>{p.rg}</td>
+                  <td style={tdStyle}>{p.cpf}</td>
+                  <td style={tdStyle}>{p.funcao}</td>
+                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
+                    <GhostBtn icon={Pencil} title="Editar" hoverColor="var(--primary)" onClick={() => iniciarEdicao(p)} />
+                    <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => setConfirmDelete(p.id)} />
                   </td>
                 </tr>
               ))}
@@ -286,42 +264,29 @@ export default function Profissionais() {
         </div>
 
         {!loading && profissionais.length > 0 && (
-          <div style={{
-            background: "var(--surface-2)", borderTop: "1px solid var(--border)",
-            padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <span style={{ fontSize: 12, color: "var(--text-3)" }}>
-              Mostrando {paginated.length} de {profissionais.length} registros
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
-                style={{
-                  background: "var(--surface-3)", color: "var(--text-1)",
-                  border: "1px solid var(--border)", padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-                  opacity: page === 1 ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
-                }}>
-                <ChevronLeft size={12} /> Anterior
-              </button>
-              <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
-                style={{
-                  background: "var(--surface-3)", color: "var(--text-1)",
-                  border: "1px solid var(--border)", padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-                  opacity: page === totalPages ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
-                }}>
-                Proximo <ChevronRight size={12} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={profissionais.length}
+            showing={paginated.length}
+            onPageChange={setPage}
+          />
         )}
       </div>
 
-      {/* Modal Nova Funcao */}
+      {/* Confirm Delete */}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => excluir(confirmDelete)}
+        message="Deseja excluir este profissional? Esta ação não pode ser desfeita."
+      />
+
+      {/* Modal Nova Função */}
       <Modal
         isOpen={modalFuncao}
         onClose={() => setModalFuncao(false)}
-        title="Cadastrar Nova Funcao"
+        title="Cadastrar Nova Função"
         footer={
           <>
             <button onClick={() => setModalFuncao(false)} style={{
@@ -338,11 +303,19 @@ export default function Profissionais() {
         }
       >
         <div>
-          <label style={labelStyle}>Nome da funcao</label>
+          <label style={labelStyle}>Nome da função</label>
           <input value={novaFuncao} onChange={(e) => setNovaFuncao(e.target.value)}
             style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
         </div>
       </Modal>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .form-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,70 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
-import {
-  Plus, Trash2, Inbox, ChevronRight, ChevronLeft,
-} from "lucide-react";
-
-const inputStyle = {
-  width: "100%",
-  background: "var(--surface-2)",
-  border: "1px solid var(--border)",
-  color: "var(--text-1)",
-  padding: "9px 12px",
-  borderRadius: "var(--radius-md)",
-  fontSize: 14,
-  fontFamily: "var(--font-sans)",
-  outline: "none",
-  transition: "var(--transition)",
-};
-
-const labelStyle = {
-  fontSize: 12, fontWeight: 500, color: "var(--text-2)",
-  textTransform: "uppercase", letterSpacing: "0.06em",
-  marginBottom: 6, display: "block",
-};
-
-function GhostBtn({ icon: Icon, title, hoverColor, onClick }) {
-  return (
-    <button title={title} onClick={onClick}
-      style={{
-        background: "transparent", color: "var(--text-2)",
-        border: "none", padding: 6, borderRadius: "var(--radius-sm)",
-        cursor: "pointer", transition: "var(--transition)", display: "inline-flex",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3)"; e.currentTarget.style.color = hoverColor; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-2)"; }}
-    >
-      <Icon size={15} />
-    </button>
-  );
-}
-
-function SkeletonRows({ cols }) {
-  return Array.from({ length: 5 }).map((_, i) => (
-    <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-      {Array.from({ length: cols }).map((_, j) => (
-        <td key={j} style={{ padding: "13px 16px" }}>
-          <div style={{
-            background: "var(--surface-3)", borderRadius: "var(--radius-sm)",
-            height: 14, width: "80%",
-            animation: `skeletonPulse 1.4s ease infinite`,
-            animationDelay: `${0.1 * i}s`,
-          }} />
-        </td>
-      ))}
-    </tr>
-  ));
-}
-
-function handleFocus(e) {
-  e.target.style.borderColor = "var(--primary)";
-  e.target.style.boxShadow = "0 0 0 3px var(--primary-ring)";
-}
-function handleBlur(e) {
-  e.target.style.borderColor = "var(--border)";
-  e.target.style.boxShadow = "none";
-}
+import Breadcrumb from "../components/ui/Breadcrumb";
+import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
+import Pagination from "../components/ui/Pagination";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
+import { Plus, Trash2, Inbox, Loader2, Pencil, X } from "lucide-react";
 
 export default function Empresas() {
   const [empresas, setEmpresas] = useState([]);
@@ -73,9 +15,14 @@ export default function Empresas() {
   const [endereco, setEndereco] = useState("");
   const [gestor, setGestor] = useState("");
   const [info, setInfo] = useState("");
+  const [cep, setCep] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepErro, setCepErro] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [editando, setEditando] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const perPage = 10;
   const { showToast } = useToast();
 
@@ -95,32 +42,88 @@ export default function Empresas() {
     }
   }
 
+  function mascaraCep(valor) {
+    return valor
+      .replace(/\D/g, "")
+      .replace(/(\d{5})(\d)/, "$1-$2")
+      .slice(0, 9);
+  }
+
+  async function buscarCep(valor) {
+    const cepLimpo = valor.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) return;
+
+    setCepLoading(true);
+    setCepErro("");
+    try {
+      const res = await fetch(
+        `https://viacep.com.br/ws/${cepLimpo}/json/`
+      );
+      const data = await res.json();
+      if (data.erro) {
+        setCepErro("CEP não encontrado");
+        return;
+      }
+      const enderecoFormatado =
+        `${data.logradouro}, ${data.bairro}, ` +
+        `${data.localidade} - ${data.uf}`;
+      setEndereco(enderecoFormatado);
+      setCepErro("");
+    } catch {
+      setCepErro("Erro ao buscar CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  }
+
+  function iniciarEdicao(empresa) {
+    setEditando(empresa.id);
+    setCnpj(empresa.cnpj);
+    setNome(empresa.nome);
+    setCep("");
+    setEndereco(empresa.endereco);
+    setGestor(empresa.gestor_manutencao);
+    setInfo(empresa.informacoes_adicionais || "");
+    setCepErro("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelarEdicao() {
+    setEditando(null);
+    setCnpj(""); setNome(""); setEndereco("");
+    setGestor(""); setInfo(""); setCep(""); setCepErro("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setErro("");
     try {
-      await api.post("/empresas", {
+      const payload = {
         cnpj,
         nome,
         endereco,
         gestor_manutencao: gestor,
         informacoes_adicionais: info,
-      });
-      setCnpj(""); setNome(""); setEndereco(""); setGestor(""); setInfo("");
+      };
+      if (editando) {
+        await api.put(`/empresas/${editando}`, payload);
+        showToast("Empresa atualizada com sucesso", "success");
+      } else {
+        await api.post("/empresas", payload);
+        showToast("Empresa cadastrada com sucesso", "success");
+      }
+      cancelarEdicao();
       carregarEmpresas();
-      showToast("Empresa cadastrada com sucesso", "success");
     } catch {
-      setErro("Erro ao cadastrar empresa");
-      showToast("Erro ao cadastrar empresa", "error");
+      setErro(editando ? "Erro ao atualizar empresa" : "Erro ao cadastrar empresa");
     }
   }
 
   async function excluir(id) {
-    if (!window.confirm("Deseja excluir esta empresa?")) return;
     try {
       await api.delete(`/empresas/${id}`);
       setEmpresas(empresas.filter((e) => e.id !== id));
-      showToast("Empresa excluida com sucesso", "success");
+      showToast("Empresa excluída com sucesso", "success");
     } catch {
       showToast("Erro ao excluir empresa", "error");
     }
@@ -134,9 +137,10 @@ export default function Empresas() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
-            Dashboard <ChevronRight size={12} /> Empresas
-          </div>
+          <Breadcrumb items={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Empresas" },
+          ]} />
           <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Empresas</h1>
         </div>
       </div>
@@ -154,7 +158,7 @@ export default function Empresas() {
           }}>{erro}</div>
         )}
         <form onSubmit={handleSubmit}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
               <label style={labelStyle}>CNPJ</label>
               <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} required
@@ -166,32 +170,91 @@ export default function Empresas() {
                 style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
-              <label style={labelStyle}>Endereco</label>
+              <label style={labelStyle}>CEP</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  value={cep}
+                  onChange={(e) => {
+                    const formatado = mascaraCep(e.target.value);
+                    setCep(formatado);
+                  }}
+                  onBlur={(e) => {
+                    handleBlur(e);
+                    buscarCep(cep);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      buscarCep(cep);
+                    }
+                  }}
+                  onFocus={handleFocus}
+                  placeholder="00000-000"
+                  style={inputStyle}
+                />
+                {cepLoading && (
+                  <Loader2
+                    size={16}
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--primary)",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                )}
+              </div>
+              {cepErro && (
+                <span style={{ fontSize: 12, color: "var(--alta)", marginTop: 4, display: "block" }}>
+                  {cepErro}
+                </span>
+              )}
+            </div>
+            <div>
+              <label style={labelStyle}>Endereço</label>
               <input value={endereco} onChange={(e) => setEndereco(e.target.value)} required
                 style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
-              <label style={labelStyle}>Gestor de Manutencao</label>
+              <label style={labelStyle}>Gestor de Manutenção</label>
               <input value={gestor} onChange={(e) => setGestor(e.target.value)} required
                 style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
           </div>
           <div style={{ marginTop: 16 }}>
-            <label style={labelStyle}>Informacoes Adicionais</label>
+            <label style={labelStyle}>Informações Adicionais</label>
             <textarea value={info} onChange={(e) => setInfo(e.target.value)}
               style={{ ...inputStyle, minHeight: 80, resize: "vertical" }}
               onFocus={handleFocus} onBlur={handleBlur} />
           </div>
-          <button type="submit" style={{
-            marginTop: 16,
-            background: "var(--primary)", color: "#fff",
-            padding: "8px 16px", borderRadius: "var(--radius-md)",
-            fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
-            transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
-          }}>
-            <Plus size={15} />
-            Cadastrar
-          </button>
+          <div style={{ display: "flex", gap: 12, marginTop: 16, alignItems: "center" }}>
+            <button type="submit" style={{
+              background: "var(--primary)", color: "#fff",
+              padding: "8px 16px", borderRadius: "var(--radius-md)",
+              fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
+              transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+            >
+              {editando ? <Pencil size={15} /> : <Plus size={15} />}
+              {editando ? "Salvar alterações" : "Cadastrar"}
+            </button>
+            {editando && (
+              <button type="button" onClick={cancelarEdicao} style={{
+                background: "transparent", color: "var(--text-2)",
+                border: "1px solid var(--border)", padding: "8px 16px",
+                borderRadius: "var(--radius-md)", fontSize: 13, fontWeight: 500,
+                cursor: "pointer", transition: "var(--transition)",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <X size={15} />
+                Cancelar edição
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -204,12 +267,8 @@ export default function Empresas() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                {["ID", "CNPJ", "Nome", "Endereco", "Gestor", "Acoes"].map((h) => (
-                  <th key={h} style={{
-                    fontSize: 11, fontWeight: 600, color: "var(--text-3)",
-                    textTransform: "uppercase", letterSpacing: "0.07em",
-                    padding: "12px 16px", textAlign: "left",
-                  }}>{h}</th>
+                {["ID", "CNPJ", "Nome", "Endereço", "Gestor", "Ações"].map((h) => (
+                  <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -219,7 +278,7 @@ export default function Empresas() {
                   <td colSpan="6" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>Nenhuma empresa cadastrada</div>
-                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>Use o formulario acima para cadastrar</div>
+                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>Use o formulário acima para cadastrar</div>
                   </td>
                 </tr>
               ) : paginated.map((e, i) => (
@@ -230,13 +289,14 @@ export default function Empresas() {
                   onMouseEnter={(ev) => ev.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(ev) => ev.currentTarget.style.background = "transparent"}
                 >
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{e.id}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{e.cnpj}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{e.nome}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{e.endereco}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{e.gestor_manutencao}</td>
-                  <td style={{ padding: "13px 16px" }}>
-                    <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => excluir(e.id)} />
+                  <td style={tdStyle}>{e.id}</td>
+                  <td style={tdStyle}>{e.cnpj}</td>
+                  <td style={tdStyle}>{e.nome}</td>
+                  <td style={tdStyle}>{e.endereco}</td>
+                  <td style={tdStyle}>{e.gestor_manutencao}</td>
+                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
+                    <GhostBtn icon={Pencil} title="Editar" hoverColor="var(--primary)" onClick={() => iniciarEdicao(e)} />
+                    <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => setConfirmDelete(e.id)} />
                   </td>
                 </tr>
               ))}
@@ -245,36 +305,31 @@ export default function Empresas() {
         </div>
 
         {!loading && empresas.length > 0 && (
-          <div style={{
-            background: "var(--surface-2)", borderTop: "1px solid var(--border)",
-            padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center",
-          }}>
-            <span style={{ fontSize: 12, color: "var(--text-3)" }}>
-              Mostrando {paginated.length} de {empresas.length} registros
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
-                style={{
-                  background: "var(--surface-3)", color: "var(--text-1)",
-                  border: "1px solid var(--border)", padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-                  opacity: page === 1 ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
-                }}>
-                <ChevronLeft size={12} /> Anterior
-              </button>
-              <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
-                style={{
-                  background: "var(--surface-3)", color: "var(--text-1)",
-                  border: "1px solid var(--border)", padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-                  opacity: page === totalPages ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
-                }}>
-                Proximo <ChevronRight size={12} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={empresas.length}
+            showing={paginated.length}
+            onPageChange={setPage}
+          />
         )}
       </div>
+
+      {/* Confirm Delete */}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => excluir(confirmDelete)}
+        message="Deseja excluir esta empresa? Esta ação não pode ser desfeita."
+      />
+
+      <style>{`
+        @media (max-width: 768px) {
+          .form-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

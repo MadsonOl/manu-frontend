@@ -3,15 +3,15 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Modal from "./Modal";
 import {
-  Wrench, LayoutDashboard, ClipboardList, BarChart2,
+  Wrench, Lightbulb, LayoutDashboard, ClipboardList, BarChart2,
   Building2, HardHat, LogOut, ChevronRight
 } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/dashboard" },
   { icon: ClipboardList, label: "Chamados", to: "/chamados" },
-  { icon: Wrench, label: "Ordens de Servico", to: "/ordens-servico" },
-  { icon: BarChart2, label: "Relatorios", to: "/relatorios" },
+  { icon: Wrench, label: "Ordens de Serviço", to: "/ordens-servico" },
+  { icon: BarChart2, label: "Relatórios", to: "/relatorios" },
   { icon: Building2, label: "Empresas", to: "/empresas" },
   { icon: HardHat, label: "Profissionais", to: "/profissionais" },
 ];
@@ -66,11 +66,11 @@ export default function Sidebar({ isOpen, onClose }) {
           marginBottom: 16,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Wrench size={16} style={{ color: "var(--primary)" }} />
+            <Lightbulb size={16} style={{ color: "var(--primary)" }} />
             <span style={{ fontWeight: 700, fontSize: 18, color: "var(--text-1)" }}>manu</span>
           </div>
           <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2, paddingLeft: 24 }}>
-            Gestao de Manutencoes
+            Gestão de Manutenções
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <div style={{ textAlign: "center" }}>
           <LogOut size={32} style={{ color: "var(--text-2)", marginBottom: 16 }} />
           <p style={{ fontSize: 14, color: "var(--text-2)" }}>
-            Tem certeza que deseja encerrar sua sessao?
+            Tem certeza que deseja encerrar sua sessão?
           </p>
         </div>
       </Modal>

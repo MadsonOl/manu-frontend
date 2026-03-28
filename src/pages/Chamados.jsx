@@ -3,78 +3,25 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
 import Modal from "../components/Modal";
+import Breadcrumb from "../components/ui/Breadcrumb";
+import { PriorityBadge } from "../components/ui/Badge";
+import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
+import Pagination from "../components/ui/Pagination";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import { selectStyle } from "../components/ui/InputStyles";
 import {
-  Eye, Wrench, Trash2, Inbox, ChevronRight, ChevronLeft,
-  AlertCircle, Minus, ArrowDown,
+  Eye, Wrench, Trash2, Inbox, Filter, Search,
 } from "lucide-react";
-
-function PriorityBadge({ value }) {
-  const config = {
-    ALTA: { bg: "var(--alta-bg)", color: "var(--alta)", icon: AlertCircle },
-    NORMAL: { bg: "var(--normal-bg)", color: "var(--normal)", icon: Minus },
-    BAIXA: { bg: "var(--baixa-bg)", color: "var(--baixa)", icon: ArrowDown },
-  };
-  const c = config[value] || config.NORMAL;
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "3px 9px", borderRadius: 20,
-      fontSize: 11, fontWeight: 600,
-      background: c.bg, color: c.color,
-    }}>
-      <c.icon size={11} />
-      {value}
-    </span>
-  );
-}
-
-function SkeletonRows({ cols }) {
-  return Array.from({ length: 5 }).map((_, i) => (
-    <tr key={i} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-      {Array.from({ length: cols }).map((_, j) => (
-        <td key={j} style={{ padding: "13px 16px" }}>
-          <div style={{
-            background: "var(--surface-3)",
-            borderRadius: "var(--radius-sm)",
-            height: 14,
-            width: "80%",
-            animation: `skeletonPulse 1.4s ease infinite`,
-            animationDelay: `${0.1 * i}s`,
-          }} />
-        </td>
-      ))}
-    </tr>
-  ));
-}
-
-function GhostBtn({ icon: Icon, title, hoverColor, onClick }) {
-  return (
-    <button
-      title={title}
-      onClick={onClick}
-      style={{
-        background: "transparent",
-        color: "var(--text-2)",
-        border: "none",
-        padding: 6,
-        borderRadius: "var(--radius-sm)",
-        cursor: "pointer",
-        transition: "var(--transition)",
-        display: "inline-flex",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-3)"; e.currentTarget.style.color = hoverColor; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-2)"; }}
-    >
-      <Icon size={15} />
-    </button>
-  );
-}
 
 export default function Chamados() {
   const [chamados, setChamados] = useState([]);
   const [selecionado, setSelecionado] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [busca, setBusca] = useState("");
+  const [filtroPrioridade, setFiltroPrioridade] = useState("");
+  const [filtroData, setFiltroData] = useState("");
   const perPage = 10;
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -96,11 +43,10 @@ export default function Chamados() {
   }
 
   async function excluir(id) {
-    if (!window.confirm("Deseja excluir este chamado?")) return;
     try {
       await api.delete(`/chamados/${id}`);
       setChamados(chamados.filter((c) => c.id !== id));
-      showToast("Chamado excluido com sucesso", "success");
+      showToast("Chamado excluído com sucesso", "success");
     } catch {
       showToast("Erro ao excluir chamado", "error");
     }
@@ -110,19 +56,70 @@ export default function Chamados() {
     navigate("/ordens-servico/nova", { state: { chamado } });
   }
 
-  const totalPages = Math.max(1, Math.ceil(chamados.length / perPage));
-  const paginated = chamados.slice((page - 1) * perPage, page * perPage);
+  const chamadosFiltrados = chamados.filter((c) => {
+    if (filtroPrioridade && c.prioridade !== filtroPrioridade) return false;
+    if (filtroData && c.data !== filtroData) return false;
+    if (busca) {
+      const term = busca.toLowerCase();
+      if (
+        !c.descricao?.toLowerCase().includes(term) &&
+        !c.local?.toLowerCase().includes(term) &&
+        !c.solicitante?.toLowerCase().includes(term)
+      ) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(chamadosFiltrados.length / perPage));
+  const paginated = chamadosFiltrados.slice((page - 1) * perPage, page * perPage);
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
-            Dashboard <ChevronRight size={12} /> Chamados
-          </div>
+          <Breadcrumb items={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Chamados" },
+          ]} />
           <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Chamados</h1>
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="filter-bar" style={{
+        display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center",
+      }}>
+        <Filter size={14} style={{ color: "var(--text-3)" }} />
+        <div style={{ position: "relative" }}>
+          <Search size={13} style={{
+            position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+            color: "var(--text-3)",
+          }} />
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => { setBusca(e.target.value); setPage(1); }}
+            placeholder="Buscar..."
+            style={{ ...selectStyle, paddingLeft: 30, minWidth: 180 }}
+          />
+        </div>
+        <select
+          value={filtroPrioridade}
+          onChange={(e) => { setFiltroPrioridade(e.target.value); setPage(1); }}
+          style={selectStyle}
+        >
+          <option value="">Todas prioridades</option>
+          <option value="ALTA">Alta</option>
+          <option value="NORMAL">Normal</option>
+          <option value="BAIXA">Baixa</option>
+        </select>
+        <input
+          type="date"
+          value={filtroData}
+          onChange={(e) => { setFiltroData(e.target.value); setPage(1); }}
+          style={{ ...selectStyle, colorScheme: "dark" }}
+        />
       </div>
 
       {/* Table */}
@@ -136,12 +133,8 @@ export default function Chamados() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                {["ID", "Data", "Local", "Descricao", "Prioridade", "Solicitante", "Acoes"].map((h) => (
-                  <th key={h} style={{
-                    fontSize: 11, fontWeight: 600, color: "var(--text-3)",
-                    textTransform: "uppercase", letterSpacing: "0.07em",
-                    padding: "12px 16px", textAlign: "left",
-                  }}>{h}</th>
+                {["ID", "Data", "Local", "Descrição", "Prioridade", "Solicitante", "Ações"].map((h) => (
+                  <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -154,7 +147,7 @@ export default function Chamados() {
                       Nenhum registro encontrado
                     </div>
                     <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>
-                      Os chamados aparecerao aqui quando forem abertos
+                      Os chamados aparecerão aqui quando forem abertos
                     </div>
                   </td>
                 </tr>
@@ -166,16 +159,16 @@ export default function Chamados() {
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{c.id}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{c.data}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{c.local}</td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.descricao}</td>
+                  <td style={tdStyle}>{c.id}</td>
+                  <td style={tdStyle}>{c.data}</td>
+                  <td style={tdStyle}>{c.local}</td>
+                  <td style={{ ...tdStyle, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.descricao}</td>
                   <td style={{ padding: "13px 16px" }}><PriorityBadge value={c.prioridade} /></td>
-                  <td style={{ fontSize: 13, color: "var(--text-1)", padding: "13px 16px" }}>{c.solicitante}</td>
+                  <td style={tdStyle}>{c.solicitante}</td>
                   <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
                     <GhostBtn icon={Eye} title="Ver chamado" hoverColor="var(--primary)" onClick={() => setSelecionado(c)} />
                     <GhostBtn icon={Wrench} title="Gerar OS" hoverColor="var(--normal)" onClick={() => gerarOS(c)} />
-                    <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => excluir(c.id)} />
+                    <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => setConfirmDelete(c.id)} />
                   </td>
                 </tr>
               ))}
@@ -183,46 +176,14 @@ export default function Chamados() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {!loading && chamados.length > 0 && (
-          <div style={{
-            background: "var(--surface-2)",
-            borderTop: "1px solid var(--border)",
-            padding: "12px 16px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}>
-            <span style={{ fontSize: 12, color: "var(--text-3)" }}>
-              Mostrando {paginated.length} de {chamados.length} registros
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-                style={{
-                  background: "var(--surface-3)", color: "var(--text-1)",
-                  border: "1px solid var(--border)", padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-                  opacity: page === 1 ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
-                }}
-              >
-                <ChevronLeft size={12} /> Anterior
-              </button>
-              <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
-                style={{
-                  background: "var(--surface-3)", color: "var(--text-1)",
-                  border: "1px solid var(--border)", padding: "4px 10px",
-                  borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-                  opacity: page === totalPages ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
-                }}
-              >
-                Proximo <ChevronRight size={12} />
-              </button>
-            </div>
-          </div>
+        {!loading && chamadosFiltrados.length > 0 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={chamadosFiltrados.length}
+            showing={paginated.length}
+            onPageChange={setPage}
+          />
         )}
       </div>
 
@@ -249,7 +210,7 @@ export default function Chamados() {
             {[
               ["Data", selecionado.data],
               ["Local", selecionado.local],
-              ["Descricao", selecionado.descricao],
+              ["Descrição", selecionado.descricao],
               ["Prioridade", selecionado.prioridade],
               ["Solicitante", selecionado.solicitante],
             ].map(([label, value]) => (
@@ -261,6 +222,14 @@ export default function Chamados() {
           </div>
         )}
       </Modal>
+
+      {/* Confirm Delete */}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => excluir(confirmDelete)}
+        message="Deseja excluir este chamado? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

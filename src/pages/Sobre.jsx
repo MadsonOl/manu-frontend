@@ -5,20 +5,20 @@ import {
 } from "lucide-react";
 
 const features = [
-  { icon: ClipboardList, title: "Chamados publicos", desc: "Qualquer pessoa abre um chamado via link ou QR code, sem precisar de login" },
-  { icon: Wrench, title: "Ordens de Servico", desc: "Transforme chamados em ordens, atribua responsaveis e acompanhe o status em tempo real" },
-  { icon: BarChart2, title: "Relatorios", desc: "Filtre e imprima relatorios completos das ordens de servico por periodo, local ou profissional" },
-  { icon: Building2, title: "Multiplas empresas", desc: "Gerencie dados de diferentes empresas com cabecalhos personalizados nas ordens" },
-  { icon: HardHat, title: "Equipe tecnica", desc: "Cadastre profissionais com funcoes e documentacao, vinculando-os as ordens de servico" },
-  { icon: Shield, title: "Acesso seguro", desc: "Autenticacao Firebase com rotas protegidas e controle de acesso por perfil de gestor" },
+  { icon: ClipboardList, title: "Chamados públicos", desc: "Qualquer pessoa abre um chamado via link ou QR code, sem precisar de login" },
+  { icon: Wrench, title: "Ordens de Serviço", desc: "Transforme chamados em ordens, atribua responsáveis e acompanhe o status em tempo real" },
+  { icon: BarChart2, title: "Relatórios", desc: "Filtre e imprima relatórios completos das ordens de serviço por período, local ou profissional" },
+  { icon: Building2, title: "Múltiplas empresas", desc: "Gerencie dados de diferentes empresas com cabeçalhos personalizados nas ordens" },
+  { icon: HardHat, title: "Equipe técnica", desc: "Cadastre profissionais com funções e documentação, vinculando-os às ordens de serviço" },
+  { icon: Shield, title: "Acesso seguro", desc: "Autenticação Firebase com rotas protegidas e controle de acesso por perfil de gestor" },
 ];
 
 export default function Sobre() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ minHeight: "calc(100vh - 56px)", background: "var(--bg)" }}>
       {/* Hero */}
       <section style={{
-        minHeight: "100vh",
+        minHeight: "calc(100vh - 56px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -39,7 +39,7 @@ export default function Sobre() {
           animation: "fadeIn 0.3s ease",
         }}>
           <Zap size={12} style={{ color: "var(--primary)" }} />
-          Gestao de Manutencoes
+          Gestão de Manutenções
         </div>
 
         {/* Title */}
@@ -53,7 +53,7 @@ export default function Sobre() {
           marginBottom: 16,
           animation: "fadeIn 0.4s ease 0.1s backwards",
         }}>
-          Controle total das suas manutencoes
+          Controle total das suas manutenções
         </h1>
 
         {/* Subtitle */}
@@ -66,8 +66,8 @@ export default function Sobre() {
           marginBottom: 40,
           animation: "fadeIn 0.4s ease 0.2s backwards",
         }}>
-          Plataforma completa para gestores e equipes tecnicas gerenciarem chamados,
-          ordens de servico e profissionais.
+          Plataforma completa para gestores e equipes técnicas gerenciarem chamados,
+          ordens de serviço e profissionais.
         </p>
 
         {/* Buttons */}
@@ -90,8 +90,11 @@ export default function Sobre() {
               display: "flex",
               alignItems: "center",
               gap: 6,
-            }}>
-              Comecar agora
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+            >
+              Começar agora
               <ArrowRight size={15} />
             </button>
           </Link>
@@ -130,7 +133,7 @@ export default function Sobre() {
           textAlign: "center",
           marginBottom: 48,
         }}>
-          Tudo que voce precisa
+          Tudo que você precisa
         </h2>
 
         <div style={{
@@ -176,7 +179,7 @@ export default function Sobre() {
         textAlign: "center",
       }}>
         <span style={{ fontSize: 13, color: "var(--text-3)" }}>
-          manu — Gestao de Manutencoes
+          manu — Gestão de Manutenções
         </span>
       </footer>
     </div>
