@@ -18,12 +18,17 @@ export default function NovaOrdemServico() {
   const [solicitante, setSolicitante] = useState(chamado.solicitante || "");
   const [responsavel, setResponsavel] = useState("");
   const [profissionais, setProfissionais] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
+  const [empresaId, setEmpresaId] = useState(chamado.empresa_id || "");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     api.get("/profissionais")
       .then((res) => setProfissionais(res.data))
+      .catch(() => {});
+    api.get("/empresas")
+      .then((res) => setEmpresas(res.data))
       .catch(() => {});
   }, []);
 
@@ -39,6 +44,7 @@ export default function NovaOrdemServico() {
         solicitante,
         profissional: responsavel,
         chamado_id: chamado.id || null,
+        empresa_id: empresaId || null,
       });
       showToast("Ordem de serviço criada com sucesso", "success");
       navigate("/ordens-servico");
@@ -107,6 +113,16 @@ export default function NovaOrdemServico() {
             <label style={labelStyle}>Solicitante</label>
             <input value={solicitante} onChange={(e) => setSolicitante(e.target.value)} required
               style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Empresa</label>
+            <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
+              style={inputStyle} onFocus={handleFocus} onBlur={handleBlur}>
+              <option value="">Selecione uma empresa</option>
+              {empresas.map((emp) => (
+                <option key={emp.id} value={emp.id}>{emp.nome}</option>
+              ))}
+            </select>
           </div>
           <div style={{ marginBottom: 24 }}>
             <label style={labelStyle}>Responsável</label>

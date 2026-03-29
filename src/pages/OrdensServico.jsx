@@ -113,15 +113,15 @@ export default function OrdensServico() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                {["ID", "Data", "Local", "Descrição", "Prioridade", "Solicitante", "Profissional", "Status", "Ações"].map((h) => (
+                {["ID", "Data", "Local", "Descrição", "Prioridade", "Solicitante", "Profissional", "Empresa", "Status", "Ações"].map((h) => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {loading ? <SkeletonRows cols={9} /> : paginated.length === 0 ? (
+              {loading ? <SkeletonRows cols={10} /> : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ padding: 48, textAlign: "center" }}>
+                  <td colSpan="10" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>Nenhum registro encontrado</div>
                     <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>As ordens de serviço aparecerão aqui</div>
@@ -142,6 +142,7 @@ export default function OrdensServico() {
                   <td style={{ padding: "13px 16px" }}><PriorityBadge value={o.prioridade} /></td>
                   <td style={tdStyle}>{o.solicitante}</td>
                   <td style={tdStyle}>{o.profissional}</td>
+                  <td style={tdStyle}>{o.empresa?.nome || "—"}</td>
                   <td style={{ padding: "13px 16px" }}><StatusBadge value={o.status} /></td>
                   <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
                     <GhostBtn icon={Eye} title="Ver OS" hoverColor="var(--primary)" onClick={() => setSelecionada(o)} />
@@ -197,6 +198,24 @@ export default function OrdensServico() {
                 <div style={{ fontSize: 14, color: "var(--text-1)" }}>{value}</div>
               </div>
             ))}
+
+            {selecionada.empresa && (
+              <>
+                <div style={{ borderTop: "1px solid var(--border)", margin: "4px 0" }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>Empresa</div>
+                {[
+                  ["Nome", selecionada.empresa.nome],
+                  ["CNPJ", selecionada.empresa.cnpj],
+                  ["Endereço", selecionada.empresa.endereco],
+                  ["Gestor de Manutenção", selecionada.empresa.gestor_manutencao],
+                ].map(([label, value]) => value ? (
+                  <div key={label}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 14, color: "var(--text-1)" }}>{value}</div>
+                  </div>
+                ) : null)}
+              </>
+            )}
           </div>
         )}
       </Modal>
