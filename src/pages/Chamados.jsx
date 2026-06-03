@@ -1,22 +1,27 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
+import { useApiData } from "../hooks/useApiData";
 import Modal from "../components/Modal";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { PriorityBadge } from "../components/ui/Badge";
 import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
 import Pagination from "../components/ui/Pagination";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import ErrorState from "../components/ui/ErrorState";
+import ColdStartBanner from "../components/ui/ColdStartBanner";
 import { selectStyle } from "../components/ui/InputStyles";
 import {
   Eye, Wrench, Trash2, Inbox, Filter, Search,
 } from "lucide-react";
 
 export default function Chamados() {
-  const [chamados, setChamados] = useState([]);
+  const carregar = useCallback(() => api.get("/chamados").then((r) => r.data), []);
+  const { data, setData: setChamados, loading, error, slow, reload } = useApiData(carregar);
+  const chamados = data || [];
+
   const [selecionado, setSelecionado] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [busca, setBusca] = useState("");
@@ -26,29 +31,13 @@ export default function Chamados() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  useEffect(() => {
-    carregarChamados();
-  }, []);
-
-  async function carregarChamados() {
-    setLoading(true);
-    try {
-      const res = await api.get("/chamados");
-      setChamados(res.data);
-    } catch {
-      showToast("Erro ao carregar chamados", "error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function excluir(id) {
     try {
       await api.delete(`/chamados/${id}`);
-      setChamados(chamados.filter((c) => c.id !== id));
+      setChamados((prev) => prev.filter((c) => c.id !== id));
       showToast("Chamado excluído com sucesso", "success");
-    } catch {
-      showToast("Erro ao excluir chamado", "error");
+    } catch (e) {
+      showToast(e.message, "error");
     }
   }
 
@@ -82,7 +71,7 @@ export default function Chamados() {
             { label: "Dashboard", to: "/dashboard" },
             { label: "Chamados" },
           ]} />
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Chamados</h1>
+          <h1 style={{ fontSize: "var(--fs-24)", fontWeight: 700, color: "var(--text-1)" }}>Chamados</h1>
         </div>
       </div>
 
@@ -122,6 +111,9 @@ export default function Chamados() {
         />
       </div>
 
+      {/* Aviso de cold start durante carregamento demorado */}
+      {loading && slow && <ColdStartBanner />}
+
       {/* Table */}
       <div style={{
         background: "var(--surface-1)",
@@ -130,7 +122,7 @@ export default function Chamados() {
         overflow: "hidden",
       }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="reflow-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
                 {["ID", "Data", "Local", "Descrição", "Prioridade", "Solicitante", "Ações"].map((h) => (
@@ -139,14 +131,18 @@ export default function Chamados() {
               </tr>
             </thead>
             <tbody>
-              {loading ? <SkeletonRows cols={7} /> : paginated.length === 0 ? (
+              {error ? (
+                <tr>
+                  <td colSpan="7"><ErrorState message={error} onRetry={reload} /></td>
+                </tr>
+              ) : loading ? <SkeletonRows cols={7} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>
+                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>
                       Nenhum registro encontrado
                     </div>
-                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>
+                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>
                       Os chamados aparecerão aqui quando forem abertos
                     </div>
                   </td>
@@ -159,13 +155,13 @@ export default function Chamados() {
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <td style={tdStyle}>{c.id}</td>
-                  <td style={tdStyle}>{c.data}</td>
-                  <td style={tdStyle}>{c.local}</td>
-                  <td style={{ ...tdStyle, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.descricao}</td>
-                  <td style={{ padding: "13px 16px" }}><PriorityBadge value={c.prioridade} /></td>
-                  <td style={tdStyle}>{c.solicitante}</td>
-                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
+                  <td style={tdStyle} data-label="ID">{c.id}</td>
+                  <td style={tdStyle} data-label="Data">{c.data}</td>
+                  <td style={tdStyle} data-label="Local">{c.local}</td>
+                  <td style={{ ...tdStyle, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} data-label="Descrição">{c.descricao}</td>
+                  <td style={{ padding: "13px 16px" }} data-label="Prioridade"><PriorityBadge value={c.prioridade} /></td>
+                  <td style={tdStyle} data-label="Solicitante">{c.solicitante}</td>
+                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }} data-label="Ações">
                     <GhostBtn icon={Eye} title="Ver chamado" hoverColor="var(--primary)" onClick={() => setSelecionado(c)} />
                     <GhostBtn icon={Wrench} title="Gerar OS" hoverColor="var(--normal)" onClick={() => gerarOS(c)} />
                     <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => setConfirmDelete(c.id)} />
@@ -176,7 +172,7 @@ export default function Chamados() {
           </table>
         </div>
 
-        {!loading && chamadosFiltrados.length > 0 && (
+        {!loading && !error && chamadosFiltrados.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}
@@ -198,7 +194,7 @@ export default function Chamados() {
             style={{
               background: "var(--surface-3)", color: "var(--text-1)",
               border: "1px solid var(--border)", padding: "8px 16px",
-              borderRadius: "var(--radius-md)", fontSize: 13, fontWeight: 500, cursor: "pointer",
+              borderRadius: "var(--radius-md)", fontSize: "var(--fs-13)", fontWeight: 500, cursor: "pointer",
             }}
           >
             Fechar
@@ -215,8 +211,8 @@ export default function Chamados() {
               ["Solicitante", selecionado.solicitante],
             ].map(([label, value]) => (
               <div key={label}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: 14, color: "var(--text-1)" }}>{value}</div>
+                <div style={{ fontSize: "var(--fs-12)", fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: "var(--fs-14)", color: "var(--text-1)" }}>{value}</div>
               </div>
             ))}
           </div>

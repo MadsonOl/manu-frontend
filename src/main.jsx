@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Header from "./components/Header";
 import Home from "./pages/Home";
@@ -30,29 +31,31 @@ function PublicLayout({ children }) {
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            {/* Rotas publicas */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
-            <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
-            <Route path="/cadastro" element={<PublicLayout><Cadastro /></PublicLayout>} />
-            <Route path="/recuperar-senha" element={<PublicLayout><RecuperarSenha /></PublicLayout>} />
-            <Route path="/abrir-chamado" element={<Navigate to="/" replace />} />
-            <Route path="/sobre" element={<PublicLayout><Sobre /></PublicLayout>} />
+    <AccessibilityProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <Routes>
+              {/* Rotas publicas */}
+              <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+              <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
+              <Route path="/cadastro" element={<PublicLayout><Cadastro /></PublicLayout>} />
+              <Route path="/recuperar-senha" element={<PublicLayout><RecuperarSenha /></PublicLayout>} />
+              <Route path="/abrir-chamado" element={<Navigate to="/" replace />} />
+              <Route path="/sobre" element={<PublicLayout><Sobre /></PublicLayout>} />
 
-            {/* Rotas privadas */}
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/chamados" element={<PrivateRoute><Chamados /></PrivateRoute>} />
-            <Route path="/ordens-servico" element={<PrivateRoute><OrdensServico /></PrivateRoute>} />
-            <Route path="/ordens-servico/nova" element={<PrivateRoute><NovaOrdemServico /></PrivateRoute>} />
-            <Route path="/relatorios" element={<PrivateRoute><Relatorios /></PrivateRoute>} />
-            <Route path="/empresas" element={<PrivateRoute><Empresas /></PrivateRoute>} />
-            <Route path="/profissionais" element={<PrivateRoute><Profissionais /></PrivateRoute>} />
-          </Routes>
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
+              {/* Rotas privadas */}
+              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/chamados" element={<PrivateRoute><Chamados /></PrivateRoute>} />
+              <Route path="/ordens-servico" element={<PrivateRoute><OrdensServico /></PrivateRoute>} />
+              <Route path="/ordens-servico/nova" element={<PrivateRoute><NovaOrdemServico /></PrivateRoute>} />
+              <Route path="/relatorios" element={<PrivateRoute><Relatorios /></PrivateRoute>} />
+              <Route path="/empresas" element={<PrivateRoute><Empresas /></PrivateRoute>} />
+              <Route path="/profissionais" element={<PrivateRoute><Profissionais /></PrivateRoute>} />
+            </Routes>
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </AccessibilityProvider>
   </StrictMode>
 );

@@ -59,11 +59,11 @@ export default function Home() {
         animation: "fadeIn 0.3s ease",
       }}>
         <Lightbulb size={18} style={{ color: "var(--primary)" }} />
-        <span style={{ fontWeight: 700, fontSize: 24, color: "var(--primary)" }}>manu</span>
+        <span style={{ fontWeight: 700, fontSize: "var(--fs-24)", color: "var(--primary)" }}>manu</span>
       </div>
 
       <div style={{
-        fontSize: 13,
+        fontSize: "var(--fs-13)",
         color: "var(--text-3)",
         marginBottom: 32,
         animation: "fadeIn 0.3s ease",
@@ -88,7 +88,7 @@ export default function Home() {
             border: "1px solid rgba(52,211,153,0.2)",
             borderRadius: "var(--radius-md)",
             padding: 14,
-            fontSize: 13,
+            fontSize: "var(--fs-13)",
             color: "var(--finalizado)",
             marginBottom: 16,
             display: "flex",
@@ -106,7 +106,7 @@ export default function Home() {
             border: "1px solid rgba(248,113,113,0.2)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
-            fontSize: 13,
+            fontSize: "var(--fs-13)",
             color: "var(--alta)",
             marginBottom: 16,
           }}>
@@ -146,16 +146,16 @@ export default function Home() {
             </div>
             <button type="submit" disabled={loading} style={{
               width: "100%",
-              background: "var(--primary)", color: "#fff",
+              background: "var(--primary-strong)", color: "#fff",
               padding: "12px 20px", borderRadius: "var(--radius-md)",
-              fontSize: 15, fontWeight: 600, border: "none",
+              fontSize: "var(--fs-15)", fontWeight: 600, border: "none",
               cursor: loading ? "not-allowed" : "pointer",
               transition: "var(--transition)",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               opacity: loading ? 0.7 : 1,
             }}
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--primary-dark)"; }}
-              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
               {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} />}
               Enviar chamado
@@ -167,7 +167,7 @@ export default function Home() {
             background: "var(--surface-3)", color: "var(--text-1)",
             border: "1px solid var(--border)",
             padding: "8px 16px", borderRadius: "var(--radius-md)",
-            fontSize: 13, fontWeight: 500, cursor: "pointer",
+            fontSize: "var(--fs-13)", fontWeight: 500, cursor: "pointer",
             transition: "var(--transition)",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
           }}>
@@ -180,7 +180,7 @@ export default function Home() {
       {/* Link para /sobre */}
       <Link to="/sobre" style={{
         marginTop: 24,
-        fontSize: 14,
+        fontSize: "var(--fs-14)",
         color: "var(--primary)",
         textDecoration: "none",
         fontWeight: 500,
@@ -190,7 +190,7 @@ export default function Home() {
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--primary)",
       }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary)"; e.currentTarget.style.color = "#fff"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--primary-strong)"; e.currentTarget.style.color = "#fff"; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--primary)"; }}
       >
         Saiba mais sobre o manu

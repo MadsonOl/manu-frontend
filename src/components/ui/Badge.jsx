@@ -11,7 +11,7 @@ export function PriorityBadge({ value }) {
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 5,
       padding: "3px 9px", borderRadius: 20,
-      fontSize: 11, fontWeight: 600,
+      fontSize: "var(--fs-11)", fontWeight: 600,
       background: c.bg, color: c.color,
     }}>
       <c.icon size={11} />
@@ -26,7 +26,7 @@ export function StatusBadge({ value }) {
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 5,
       padding: "3px 9px", borderRadius: 20,
-      fontSize: 11, fontWeight: 600,
+      fontSize: "var(--fs-11)", fontWeight: 600,
       background: isFinalizado ? "var(--finalizado-bg)" : "var(--atendimento-bg)",
       color: isFinalizado ? "var(--finalizado)" : "var(--atendimento)",
     }}>

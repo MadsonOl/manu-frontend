@@ -1,5 +1,5 @@
 export const thStyle = {
-  fontSize: 11,
+  fontSize: "var(--fs-11)",
   fontWeight: 600,
   color: "var(--text-3)",
   textTransform: "uppercase",
@@ -9,7 +9,7 @@ export const thStyle = {
 };
 
 export const tdStyle = {
-  fontSize: 13,
+  fontSize: "var(--fs-13)",
   color: "var(--text-1)",
   padding: "13px 16px",
 };
@@ -41,14 +41,18 @@ export function GhostBtn({ icon: Icon, title, hoverColor, onClick }) {
       aria-label={title}
       onClick={onClick}
       style={{
+        // Alvo de toque >= 44x44 (WCAG 2.5.5) com o icone centralizado.
         background: "transparent",
         color: "var(--text-2)",
         border: "none",
-        padding: 6,
+        minWidth: 44,
+        minHeight: 44,
         borderRadius: "var(--radius-sm)",
         cursor: "pointer",
         transition: "var(--transition)",
         display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "var(--surface-3)";

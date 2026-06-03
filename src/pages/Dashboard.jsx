@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback } from "react";
+import { Link } from "react-router-dom";
 import api from "../services/api";
+import { useApiData } from "../hooks/useApiData";
 import Breadcrumb from "../components/ui/Breadcrumb";
+import ColdStartBanner from "../components/ui/ColdStartBanner";
 import {
   ClipboardList, Wrench, BarChart2, Building2, HardHat,
   ChevronRight, Clock, CheckCircle,
@@ -23,35 +25,36 @@ const statCards = [
 ];
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [stats, setStats] = useState({ chamados: 0, ordensAtendimento: 0, ordensFinalizado: 0, profissionais: 0 });
-  const [loadingStats, setLoadingStats] = useState(true);
-
-  useEffect(() => {
-    Promise.all([
+  // Cada chamada tem seu proprio catch para que uma falha isolada nao zere todo
+  // o painel; o cartao apenas mostra 0. O hook ainda sinaliza cold start (slow).
+  const carregarStats = useCallback(async () => {
+    const [chamRes, osRes, profRes] = await Promise.all([
       api.get("/chamados").catch(() => ({ data: [] })),
       api.get("/ordens-servico").catch(() => ({ data: [] })),
       api.get("/profissionais").catch(() => ({ data: [] })),
-    ]).then(([chamRes, osRes, profRes]) => {
-      const ordens = osRes.data;
-      setStats({
-        chamados: chamRes.data.length,
-        ordensAtendimento: ordens.filter((o) => o.status !== "FINALIZADO").length,
-        ordensFinalizado: ordens.filter((o) => o.status === "FINALIZADO").length,
-        profissionais: profRes.data.length,
-      });
-    }).finally(() => setLoadingStats(false));
+    ]);
+    const ordens = osRes.data;
+    return {
+      chamados: chamRes.data.length,
+      ordensAtendimento: ordens.filter((o) => o.status !== "FINALIZADO").length,
+      ordensFinalizado: ordens.filter((o) => o.status === "FINALIZADO").length,
+      profissionais: profRes.data.length,
+    };
   }, []);
+  const { data: stats, loading: loadingStats, slow } = useApiData(carregarStats);
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Breadcrumb items={[{ label: "Dashboard" }]} />
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>
+        <h1 style={{ fontSize: "var(--fs-24)", fontWeight: 700, color: "var(--text-1)" }}>
           Dashboard
         </h1>
       </div>
+
+      {/* Aviso de cold start durante carregamento demorado */}
+      {loadingStats && slow && <ColdStartBanner />}
 
       {/* Stats */}
       <div className="stats-grid" style={{
@@ -74,7 +77,7 @@ export default function Dashboard() {
               justifyContent: "space-between",
               marginBottom: 12,
             }}>
-              <span style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <span style={{ fontSize: "var(--fs-12)", color: "var(--text-3)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 {s.label}
               </span>
               <div style={{
@@ -92,8 +95,8 @@ export default function Dashboard() {
                 animation: "skeletonPulse 1.4s ease infinite",
               }} />
             ) : (
-              <div style={{ fontSize: 28, fontWeight: 700, color: "var(--text-1)" }}>
-                {stats[s.key]}
+              <div style={{ fontSize: "var(--fs-28)", fontWeight: 700, color: "var(--text-1)" }}>
+                {stats?.[s.key] ?? 0}
               </div>
             )}
           </div>
@@ -107,10 +110,14 @@ export default function Dashboard() {
         gap: 16,
       }}>
         {modules.map((m, i) => (
-          <div
+          // Cartao de navegacao como Link real: foco por teclado e ativacao
+          // com Enter, alem do clique (WCAG 2.1.1 / 2.4.7).
+          <Link
             key={m.label}
-            onClick={() => navigate(m.rota)}
+            to={m.rota}
             style={{
+              display: "block",
+              textDecoration: "none",
               background: "var(--surface-1)",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-lg)",
@@ -143,10 +150,10 @@ export default function Dashboard() {
             }}>
               <m.icon size={20} style={{ color: "var(--primary)" }} />
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
+            <h3 style={{ fontSize: "var(--fs-15)", fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
               {m.label}
             </h3>
-            <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.5 }}>
+            <p style={{ fontSize: "var(--fs-13)", color: "var(--text-2)", lineHeight: 1.5 }}>
               {m.desc}
             </p>
             <ChevronRight size={16} style={{
@@ -155,7 +162,7 @@ export default function Dashboard() {
               right: 20,
               color: "var(--text-3)",
             }} />
-          </div>
+          </Link>
         ))}
       </div>
 

@@ -14,6 +14,9 @@ export default function Layout({ children }) {
       <button
         onClick={() => setSidebarOpen(true)}
         className="mobile-menu-btn"
+        aria-label="Abrir menu de navegacao"
+        title="Menu"
+        aria-expanded={sidebarOpen}
         style={{
           position: "fixed",
           top: 16,
@@ -21,11 +24,14 @@ export default function Layout({ children }) {
           zIndex: 100,
           background: "var(--surface-2)",
           border: "1px solid var(--border)",
-          padding: 8,
+          width: 44,
+          height: 44,
           borderRadius: "var(--radius-sm)",
           cursor: "pointer",
           color: "var(--text-1)",
           display: "none",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <Menu size={20} />

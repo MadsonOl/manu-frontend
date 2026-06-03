@@ -29,40 +29,48 @@ export default function Pagination({ page, totalPages, total, showing, onPageCha
       flexWrap: "wrap",
       gap: 8,
     }}>
-      <span style={{ fontSize: 12, color: "var(--text-3)" }}>
+      <span style={{ fontSize: "var(--fs-12)", color: "var(--text-3)" }}>
         Mostrando {showing} de {total} registros
       </span>
       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
         <button
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
+          aria-label="Pagina anterior"
+          title="Pagina anterior"
           style={{
             background: "var(--surface-3)", color: "var(--text-1)",
-            border: "1px solid var(--border)", padding: "4px 8px",
-            borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-            opacity: page === 1 ? 0.5 : 1, display: "flex", alignItems: "center",
+            border: "1px solid var(--border)", padding: 0,
+            borderRadius: "var(--radius-sm)", fontSize: "var(--fs-12)",
+            cursor: page === 1 ? "not-allowed" : "pointer",
+            opacity: page === 1 ? 0.5 : 1,
+            minWidth: 44, minHeight: 44, display: "flex",
+            alignItems: "center", justifyContent: "center",
           }}
         >
-          <ChevronLeft size={14} />
+          <ChevronLeft size={16} />
         </button>
 
         {pages.map((p, i) =>
           p === "..." ? (
-            <span key={`dots-${i}`} style={{ fontSize: 12, color: "var(--text-3)", padding: "0 4px" }}>...</span>
+            <span key={`dots-${i}`} style={{ fontSize: "var(--fs-12)", color: "var(--text-3)", padding: "0 4px" }}>...</span>
           ) : (
             <button
               key={p}
               onClick={() => onPageChange(p)}
+              aria-label={`Pagina ${p}`}
+              aria-current={p === page ? "page" : undefined}
               style={{
-                background: p === page ? "var(--primary)" : "var(--surface-3)",
+                background: p === page ? "var(--primary-strong)" : "var(--surface-3)",
                 color: p === page ? "#fff" : "var(--text-1)",
-                border: p === page ? "1px solid var(--primary)" : "1px solid var(--border)",
-                padding: "4px 10px",
+                border: p === page ? "1px solid var(--primary-strong)" : "1px solid var(--border)",
+                padding: "0 10px",
                 borderRadius: "var(--radius-sm)",
-                fontSize: 12,
+                fontSize: "var(--fs-12)",
                 fontWeight: p === page ? 600 : 400,
                 cursor: "pointer",
-                minWidth: 32,
+                minWidth: 44,
+                minHeight: 44,
                 transition: "var(--transition)",
               }}
             >
@@ -74,14 +82,19 @@ export default function Pagination({ page, totalPages, total, showing, onPageCha
         <button
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
+          aria-label="Proxima pagina"
+          title="Proxima pagina"
           style={{
             background: "var(--surface-3)", color: "var(--text-1)",
-            border: "1px solid var(--border)", padding: "4px 8px",
-            borderRadius: "var(--radius-sm)", fontSize: 12, cursor: "pointer",
-            opacity: page === totalPages ? 0.5 : 1, display: "flex", alignItems: "center",
+            border: "1px solid var(--border)", padding: 0,
+            borderRadius: "var(--radius-sm)", fontSize: "var(--fs-12)",
+            cursor: page === totalPages ? "not-allowed" : "pointer",
+            opacity: page === totalPages ? 0.5 : 1,
+            minWidth: 44, minHeight: 44, display: "flex",
+            alignItems: "center", justifyContent: "center",
           }}
         >
-          <ChevronRight size={14} />
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>

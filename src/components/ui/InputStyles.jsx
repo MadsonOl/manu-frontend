@@ -5,14 +5,14 @@ export const inputStyle = {
   color: "var(--text-1)",
   padding: "9px 12px",
   borderRadius: "var(--radius-md)",
-  fontSize: 14,
+  fontSize: "var(--fs-14)",
   fontFamily: "var(--font-sans)",
   outline: "none",
   transition: "var(--transition)",
 };
 
 export const labelStyle = {
-  fontSize: 12,
+  fontSize: "var(--fs-12)",
   fontWeight: 500,
   color: "var(--text-2)",
   textTransform: "uppercase",
@@ -27,7 +27,7 @@ export const selectStyle = {
   color: "var(--text-1)",
   padding: "7px 12px",
   borderRadius: "var(--radius-md)",
-  fontSize: 13,
+  fontSize: "var(--fs-13)",
   fontFamily: "var(--font-sans)",
   outline: "none",
 };

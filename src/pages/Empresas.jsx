@@ -1,15 +1,24 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
+import { useApiData } from "../hooks/useApiData";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
 import Pagination from "../components/ui/Pagination";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import ErrorState from "../components/ui/ErrorState";
+import ColdStartBanner from "../components/ui/ColdStartBanner";
 import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
+import Field from "../components/ui/Field";
+import { maskCNPJ, maskCEP, onlyDigits } from "../utils/masks";
+import { validarCNPJ } from "../utils/validators";
 import { Plus, Trash2, Inbox, Loader2, Pencil, X } from "lucide-react";
 
 export default function Empresas() {
-  const [empresas, setEmpresas] = useState([]);
+  const carregar = useCallback(() => api.get("/empresas").then((r) => r.data), []);
+  const { data, setData: setEmpresas, loading, error, slow, reload } = useApiData(carregar);
+  const empresas = data || [];
+
   const [cnpj, setCnpj] = useState("");
   const [nome, setNome] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -19,35 +28,12 @@ export default function Empresas() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepErro, setCepErro] = useState("");
   const [erro, setErro] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [erros, setErros] = useState({});
   const [page, setPage] = useState(1);
   const [editando, setEditando] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const perPage = 10;
   const { showToast } = useToast();
-
-  useEffect(() => {
-    carregarEmpresas();
-  }, []);
-
-  async function carregarEmpresas() {
-    setLoading(true);
-    try {
-      const res = await api.get("/empresas");
-      setEmpresas(res.data);
-    } catch {
-      showToast("Erro ao carregar empresas", "error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function mascaraCep(valor) {
-    return valor
-      .replace(/\D/g, "")
-      .replace(/(\d{5})(\d)/, "$1-$2")
-      .slice(0, 9);
-  }
 
   async function buscarCep(valor) {
     const cepLimpo = valor.replace(/\D/g, "");
@@ -78,13 +64,14 @@ export default function Empresas() {
 
   function iniciarEdicao(empresa) {
     setEditando(empresa.id);
-    setCnpj(empresa.cnpj);
+    setCnpj(maskCNPJ(empresa.cnpj));
     setNome(empresa.nome);
     setCep("");
     setEndereco(empresa.endereco);
     setGestor(empresa.gestor_manutencao);
     setInfo(empresa.informacoes_adicionais || "");
     setCepErro("");
+    setErros({});
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -92,14 +79,25 @@ export default function Empresas() {
     setEditando(null);
     setCnpj(""); setNome(""); setEndereco("");
     setGestor(""); setInfo(""); setCep(""); setCepErro("");
+    setErros({});
+  }
+
+  // Valida o CNPJ (digito verificador). Retorna true se nao houver erros.
+  function validar() {
+    const e = {};
+    if (!validarCNPJ(cnpj)) e.cnpj = "CNPJ invalido.";
+    setErros(e);
+    return Object.keys(e).length === 0;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setErro("");
+    if (!validar()) return;
     try {
       const payload = {
-        cnpj,
+        // CNPJ normalizado (so digitos) para a API.
+        cnpj: onlyDigits(cnpj),
         nome,
         endereco,
         gestor_manutencao: gestor,
@@ -113,19 +111,19 @@ export default function Empresas() {
         showToast("Empresa cadastrada com sucesso", "success");
       }
       cancelarEdicao();
-      carregarEmpresas();
-    } catch {
-      setErro(editando ? "Erro ao atualizar empresa" : "Erro ao cadastrar empresa");
+      reload();
+    } catch (err) {
+      setErro(err.message || (editando ? "Erro ao atualizar empresa" : "Erro ao cadastrar empresa"));
     }
   }
 
   async function excluir(id) {
     try {
       await api.delete(`/empresas/${id}`);
-      setEmpresas(empresas.filter((e) => e.id !== id));
+      setEmpresas((prev) => prev.filter((e) => e.id !== id));
       showToast("Empresa excluída com sucesso", "success");
-    } catch {
-      showToast("Erro ao excluir empresa", "error");
+    } catch (e) {
+      showToast(e.message, "error");
     }
   }
 
@@ -141,7 +139,7 @@ export default function Empresas() {
             { label: "Dashboard", to: "/dashboard" },
             { label: "Empresas" },
           ]} />
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Empresas</h1>
+          <h1 style={{ fontSize: "var(--fs-24)", fontWeight: 700, color: "var(--text-1)" }}>Empresas</h1>
         </div>
       </div>
 
@@ -154,30 +152,27 @@ export default function Empresas() {
           <div style={{
             background: "var(--alta-bg)", border: "1px solid rgba(248,113,113,0.2)",
             borderRadius: "var(--radius-md)", padding: "10px 14px",
-            fontSize: 13, color: "var(--alta)", marginBottom: 16,
+            fontSize: "var(--fs-13)", color: "var(--alta)", marginBottom: 16,
           }}>{erro}</div>
         )}
         <form onSubmit={handleSubmit}>
           <div className="form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <Field
+              id="empresa-cnpj" label="CNPJ" value={cnpj}
+              onChange={(v) => setCnpj(maskCNPJ(v))}
+              onBlur={() => setErros((p) => ({ ...p, cnpj: cnpj && !validarCNPJ(cnpj) ? "CNPJ invalido." : "" }))}
+              required inputMode="numeric" placeholder="00.000.000/0000-00" error={erros.cnpj}
+            />
+            <Field id="empresa-nome" label="Nome da Empresa" value={nome} onChange={setNome} required />
+
+            {/* CEP autopreenche o endereco; mantem o indicador de carregamento. */}
             <div>
-              <label style={labelStyle}>CNPJ</label>
-              <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} required
-                style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-            </div>
-            <div>
-              <label style={labelStyle}>Nome da Empresa</label>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} required
-                style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-            </div>
-            <div>
-              <label style={labelStyle}>CEP</label>
+              <label htmlFor="empresa-cep" style={labelStyle}>CEP</label>
               <div style={{ position: "relative" }}>
                 <input
+                  id="empresa-cep"
                   value={cep}
-                  onChange={(e) => {
-                    const formatado = mascaraCep(e.target.value);
-                    setCep(formatado);
-                  }}
+                  onChange={(e) => setCep(maskCEP(e.target.value))}
                   onBlur={(e) => {
                     handleBlur(e);
                     buscarCep(cep);
@@ -190,11 +185,14 @@ export default function Empresas() {
                   }}
                   onFocus={handleFocus}
                   placeholder="00000-000"
+                  inputMode="numeric"
+                  aria-describedby={cepErro ? "empresa-cep-erro" : undefined}
                   style={inputStyle}
                 />
                 {cepLoading && (
                   <Loader2
                     size={16}
+                    aria-label="Buscando CEP"
                     style={{
                       position: "absolute",
                       right: 12,
@@ -207,37 +205,27 @@ export default function Empresas() {
                 )}
               </div>
               {cepErro && (
-                <span style={{ fontSize: 12, color: "var(--alta)", marginTop: 4, display: "block" }}>
+                <span id="empresa-cep-erro" role="alert" style={{ fontSize: "var(--fs-12)", color: "var(--alta)", marginTop: 6, display: "block" }}>
                   {cepErro}
                 </span>
               )}
             </div>
-            <div>
-              <label style={labelStyle}>Endereço</label>
-              <input value={endereco} onChange={(e) => setEndereco(e.target.value)} required
-                style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-            </div>
-            <div>
-              <label style={labelStyle}>Gestor de Manutenção</label>
-              <input value={gestor} onChange={(e) => setGestor(e.target.value)} required
-                style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-            </div>
+
+            <Field id="empresa-endereco" label="Endereço" value={endereco} onChange={setEndereco} required autoComplete="street-address" />
+            <Field id="empresa-gestor" label="Gestor de Manutenção" value={gestor} onChange={setGestor} required />
           </div>
           <div style={{ marginTop: 16 }}>
-            <label style={labelStyle}>Informações Adicionais</label>
-            <textarea value={info} onChange={(e) => setInfo(e.target.value)}
-              style={{ ...inputStyle, minHeight: 80, resize: "vertical" }}
-              onFocus={handleFocus} onBlur={handleBlur} />
+            <Field id="empresa-info" label="Informações Adicionais" type="textarea" value={info} onChange={setInfo} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 16, alignItems: "center" }}>
             <button type="submit" style={{
-              background: "var(--primary)", color: "#fff",
+              background: "var(--primary-strong)", color: "#fff",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
+              fontSize: "var(--fs-13)", fontWeight: 500, border: "none", cursor: "pointer",
               transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
             }}
               onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
               {editando ? <Pencil size={15} /> : <Plus size={15} />}
               {editando ? "Salvar alterações" : "Cadastrar"}
@@ -246,7 +234,7 @@ export default function Empresas() {
               <button type="button" onClick={cancelarEdicao} style={{
                 background: "transparent", color: "var(--text-2)",
                 border: "1px solid var(--border)", padding: "8px 16px",
-                borderRadius: "var(--radius-md)", fontSize: 13, fontWeight: 500,
+                borderRadius: "var(--radius-md)", fontSize: "var(--fs-13)", fontWeight: 500,
                 cursor: "pointer", transition: "var(--transition)",
                 display: "flex", alignItems: "center", gap: 6,
               }}>
@@ -258,13 +246,16 @@ export default function Empresas() {
         </form>
       </div>
 
+      {/* Aviso de cold start durante carregamento demorado */}
+      {loading && slow && <ColdStartBanner />}
+
       {/* Table */}
       <div style={{
         background: "var(--surface-1)", border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)", overflow: "hidden",
       }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="reflow-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
                 {["ID", "CNPJ", "Nome", "Endereço", "Gestor", "Ações"].map((h) => (
@@ -273,12 +264,16 @@ export default function Empresas() {
               </tr>
             </thead>
             <tbody>
-              {loading ? <SkeletonRows cols={6} /> : paginated.length === 0 ? (
+              {error ? (
+                <tr>
+                  <td colSpan="6"><ErrorState message={error} onRetry={reload} /></td>
+                </tr>
+              ) : loading ? <SkeletonRows cols={6} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>Nenhuma empresa cadastrada</div>
-                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>Use o formulário acima para cadastrar</div>
+                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhuma empresa cadastrada</div>
+                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>Use o formulário acima para cadastrar</div>
                   </td>
                 </tr>
               ) : paginated.map((e, i) => (
@@ -289,12 +284,12 @@ export default function Empresas() {
                   onMouseEnter={(ev) => ev.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(ev) => ev.currentTarget.style.background = "transparent"}
                 >
-                  <td style={tdStyle}>{e.id}</td>
-                  <td style={tdStyle}>{e.cnpj}</td>
-                  <td style={tdStyle}>{e.nome}</td>
-                  <td style={tdStyle}>{e.endereco}</td>
-                  <td style={tdStyle}>{e.gestor_manutencao}</td>
-                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
+                  <td style={tdStyle} data-label="ID">{e.id}</td>
+                  <td style={tdStyle} data-label="CNPJ">{maskCNPJ(e.cnpj)}</td>
+                  <td style={tdStyle} data-label="Nome">{e.nome}</td>
+                  <td style={tdStyle} data-label="Endereço">{e.endereco}</td>
+                  <td style={tdStyle} data-label="Gestor">{e.gestor_manutencao}</td>
+                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }} data-label="Ações">
                     <GhostBtn icon={Pencil} title="Editar" hoverColor="var(--primary)" onClick={() => iniciarEdicao(e)} />
                     <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => setConfirmDelete(e.id)} />
                   </td>
@@ -304,7 +299,7 @@ export default function Empresas() {
           </table>
         </div>
 
-        {!loading && empresas.length > 0 && (
+        {!loading && !error && empresas.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}

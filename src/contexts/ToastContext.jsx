@@ -32,18 +32,24 @@ export function ToastProvider({ children }) {
 }
 
 function ToastContainer({ toasts, removeToast }) {
-  if (toasts.length === 0) return null;
-
+  // A regiao permanece sempre montada (mesmo vazia) para que o aria-live
+  // anuncie de forma confiavel inclusive o primeiro toast.
   return (
-    <div style={{
-      position: "fixed",
-      bottom: 24,
-      right: 24,
-      zIndex: 1000,
-      display: "flex",
-      flexDirection: "column",
-      gap: 8,
-    }}>
+    <div
+      // Regiao viva: leitores de tela anunciam toasts ao surgirem.
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      style={{
+        position: "fixed",
+        bottom: 24,
+        right: 24,
+        zIndex: 1000,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -82,7 +88,7 @@ function Toast({ toast, onClose }) {
       alignItems: "center",
       gap: 10,
       boxShadow: "var(--shadow-lg)",
-      fontSize: 13,
+      fontSize: "var(--fs-13)",
       color: "var(--text-1)",
       animation: "slideInRight 0.2s ease",
       minWidth: 280,
@@ -94,13 +100,19 @@ function Toast({ toast, onClose }) {
       <span style={{ flex: 1 }}>{toast.message}</span>
       <button
         onClick={onClose}
+        aria-label="Fechar notificacao"
+        title="Fechar"
         style={{
           background: "none",
           border: "none",
           color: "var(--text-3)",
           cursor: "pointer",
-          padding: 2,
+          minWidth: 44,
+          minHeight: 44,
+          padding: 0,
           display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           flexShrink: 0,
         }}
       >

@@ -30,7 +30,7 @@ export default function Sobre() {
           padding: "4px 12px",
           border: "1px solid var(--border)",
           borderRadius: 20,
-          fontSize: 12,
+          fontSize: "var(--fs-12)",
           color: "var(--text-3)",
           display: "inline-flex",
           alignItems: "center",
@@ -44,7 +44,7 @@ export default function Sobre() {
 
         {/* Title */}
         <h1 style={{
-          fontSize: "clamp(32px, 5vw, 56px)",
+          fontSize: "clamp(2rem, 5vw, 3.5rem)",
           fontWeight: 700,
           color: "var(--text-1)",
           textAlign: "center",
@@ -58,7 +58,7 @@ export default function Sobre() {
 
         {/* Subtitle */}
         <p style={{
-          fontSize: 18,
+          fontSize: "var(--fs-18)",
           color: "var(--text-2)",
           textAlign: "center",
           maxWidth: 500,
@@ -78,11 +78,11 @@ export default function Sobre() {
         }}>
           <Link to="/cadastro" style={{ textDecoration: "none" }}>
             <button style={{
-              background: "var(--primary)",
+              background: "var(--primary-strong)",
               color: "#fff",
               padding: "8px 16px",
               borderRadius: "var(--radius-md)",
-              fontSize: 13,
+              fontSize: "var(--fs-13)",
               fontWeight: 500,
               border: "none",
               cursor: "pointer",
@@ -92,7 +92,7 @@ export default function Sobre() {
               gap: 6,
             }}
               onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
               Começar agora
               <ArrowRight size={15} />
@@ -105,7 +105,7 @@ export default function Sobre() {
               border: "1px solid var(--border)",
               padding: "8px 16px",
               borderRadius: "var(--radius-md)",
-              fontSize: 13,
+              fontSize: "var(--fs-13)",
               fontWeight: 500,
               cursor: "pointer",
               transition: "var(--transition)",
@@ -127,7 +127,7 @@ export default function Sobre() {
         margin: "0 auto",
       }}>
         <h2 style={{
-          fontSize: 28,
+          fontSize: "var(--fs-28)",
           fontWeight: 700,
           color: "var(--text-1)",
           textAlign: "center",
@@ -161,10 +161,10 @@ export default function Sobre() {
               }}>
                 <f.icon size={20} style={{ color: "var(--primary)" }} />
               </div>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-1)", marginBottom: 8 }}>
+              <h3 style={{ fontSize: "var(--fs-15)", fontWeight: 600, color: "var(--text-1)", marginBottom: 8 }}>
                 {f.title}
               </h3>
-              <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.6 }}>
+              <p style={{ fontSize: "var(--fs-13)", color: "var(--text-2)", lineHeight: 1.6 }}>
                 {f.desc}
               </p>
             </div>
@@ -178,7 +178,7 @@ export default function Sobre() {
         padding: 24,
         textAlign: "center",
       }}>
-        <span style={{ fontSize: 13, color: "var(--text-3)" }}>
+        <span style={{ fontSize: "var(--fs-13)", color: "var(--text-3)" }}>
           manu — Gestão de Manutenções
         </span>
       </footer>

@@ -1,29 +1,25 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import api from "../services/api";
-import { useToast } from "../contexts/ToastContext";
+import { useApiData } from "../hooks/useApiData";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { PriorityBadge, StatusBadge } from "../components/ui/Badge";
 import { SkeletonRows, thStyle, tdStyle } from "../components/ui/TableUtils";
 import Pagination from "../components/ui/Pagination";
+import ErrorState from "../components/ui/ErrorState";
+import ColdStartBanner from "../components/ui/ColdStartBanner";
 import { selectStyle } from "../components/ui/InputStyles";
 import { Printer, Inbox, Filter } from "lucide-react";
 
 export default function Relatorios() {
-  const [ordens, setOrdens] = useState([]);
+  const carregar = useCallback(() => api.get("/ordens-servico").then((r) => r.data), []);
+  const { data, loading, error, slow, reload } = useApiData(carregar);
+  const ordens = data || [];
+
   const [filtroProfissional, setFiltroProfissional] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroData, setFiltroData] = useState("");
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const perPage = 10;
-  const { showToast } = useToast();
-
-  useEffect(() => {
-    api.get("/ordens-servico")
-      .then((res) => setOrdens(res.data))
-      .catch(() => showToast("Erro ao carregar relatórios", "error"))
-      .finally(() => setLoading(false));
-  }, []);
 
   const ordensFiltradas = ordens.filter((o) => {
     if (filtroProfissional && o.profissional !== filtroProfissional) return false;
@@ -47,20 +43,20 @@ export default function Relatorios() {
             { label: "Dashboard", to: "/dashboard" },
             { label: "Relatórios" },
           ]} />
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Relatórios</h1>
+          <h1 style={{ fontSize: "var(--fs-24)", fontWeight: 700, color: "var(--text-1)" }}>Relatórios</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button
             onClick={() => window.print()}
             className="no-print"
             style={{
-              background: "var(--primary)", color: "#fff",
+              background: "var(--primary-strong)", color: "#fff",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
+              fontSize: "var(--fs-13)", fontWeight: 500, border: "none", cursor: "pointer",
               transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
             }}
             onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
           >
             <Printer size={15} />
             Imprimir
@@ -86,13 +82,16 @@ export default function Relatorios() {
         />
       </div>
 
+      {/* Aviso de cold start durante carregamento demorado */}
+      {loading && slow && <ColdStartBanner />}
+
       {/* Table */}
       <div style={{
         background: "var(--surface-1)", border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)", overflow: "hidden",
       }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="reflow-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
                 {["ID", "Data", "Local", "Descrição", "Prioridade", "Solicitante", "Profissional", "Status"].map((h) => (
@@ -101,12 +100,16 @@ export default function Relatorios() {
               </tr>
             </thead>
             <tbody>
-              {loading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
+              {error ? (
+                <tr>
+                  <td colSpan="8"><ErrorState message={error} onRetry={reload} /></td>
+                </tr>
+              ) : loading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="8" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>Nenhuma OS encontrada</div>
-                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>Ajuste os filtros ou aguarde novas ordens</div>
+                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhuma OS encontrada</div>
+                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>Ajuste os filtros ou aguarde novas ordens</div>
                   </td>
                 </tr>
               ) : paginated.map((o, i) => (
@@ -117,21 +120,21 @@ export default function Relatorios() {
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <td style={tdStyle}>{o.id}</td>
-                  <td style={tdStyle}>{o.data}</td>
-                  <td style={tdStyle}>{o.local}</td>
-                  <td style={{ ...tdStyle, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.descricao}</td>
-                  <td style={{ padding: "13px 16px" }}><PriorityBadge value={o.prioridade} /></td>
-                  <td style={tdStyle}>{o.solicitante}</td>
-                  <td style={tdStyle}>{o.profissional}</td>
-                  <td style={{ padding: "13px 16px" }}><StatusBadge value={o.status} /></td>
+                  <td style={tdStyle} data-label="ID">{o.id}</td>
+                  <td style={tdStyle} data-label="Data">{o.data}</td>
+                  <td style={tdStyle} data-label="Local">{o.local}</td>
+                  <td style={{ ...tdStyle, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} data-label="Descrição">{o.descricao}</td>
+                  <td style={{ padding: "13px 16px" }} data-label="Prioridade"><PriorityBadge value={o.prioridade} /></td>
+                  <td style={tdStyle} data-label="Solicitante">{o.solicitante}</td>
+                  <td style={tdStyle} data-label="Profissional">{o.profissional}</td>
+                  <td style={{ padding: "13px 16px" }} data-label="Status"><StatusBadge value={o.status} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {!loading && ordensFiltradas.length > 0 && (
+        {!loading && !error && ordensFiltradas.length > 0 && (
           <div className="no-print">
             <Pagination
               page={page}

@@ -24,7 +24,7 @@ export default function ConfirmDialog({
               border: "1px solid var(--border)",
               padding: "8px 16px",
               borderRadius: "var(--radius-md)",
-              fontSize: 13,
+              fontSize: "var(--fs-13)",
               fontWeight: 500,
               cursor: "pointer",
               transition: "var(--transition)",
@@ -35,12 +35,12 @@ export default function ConfirmDialog({
           <button
             onClick={() => { onConfirm(); onClose(); }}
             style={{
-              background: "var(--alta)",
+              background: "var(--danger-strong)",
               color: "#fff",
               border: "none",
               padding: "8px 16px",
               borderRadius: "var(--radius-md)",
-              fontSize: 13,
+              fontSize: "var(--fs-13)",
               fontWeight: 500,
               cursor: "pointer",
               display: "flex",
@@ -58,7 +58,7 @@ export default function ConfirmDialog({
     >
       <div style={{ textAlign: "center" }}>
         <AlertTriangle size={32} style={{ color: "var(--normal)", marginBottom: 16 }} />
-        <p style={{ fontSize: 14, color: "var(--text-2)", lineHeight: 1.6 }}>
+        <p style={{ fontSize: "var(--fs-14)", color: "var(--text-2)", lineHeight: 1.6 }}>
           {message}
         </p>
       </div>

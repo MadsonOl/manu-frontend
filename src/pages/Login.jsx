@@ -56,13 +56,13 @@ export default function Login() {
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 32 }}>
           <Lightbulb size={16} style={{ color: "var(--primary)" }} />
-          <span style={{ fontWeight: 700, fontSize: 20, color: "var(--primary)" }}>manu</span>
+          <span style={{ fontWeight: 700, fontSize: "var(--fs-20)", color: "var(--primary)" }}>manu</span>
         </div>
 
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
+        <h1 style={{ fontSize: "var(--fs-20)", fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>
           Entrar na sua conta
         </h1>
-        <p style={{ fontSize: 14, color: "var(--text-2)", marginBottom: 24 }}>
+        <p style={{ fontSize: "var(--fs-14)", color: "var(--text-2)", marginBottom: 24 }}>
           Acesso exclusivo para gestores
         </p>
 
@@ -72,7 +72,7 @@ export default function Login() {
             border: "1px solid rgba(248,113,113,0.2)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
-            fontSize: 13,
+            fontSize: "var(--fs-13)",
             color: "var(--alta)",
             marginBottom: 16,
           }}>
@@ -83,7 +83,7 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
             <label style={{
-              fontSize: 12, fontWeight: 500, color: "var(--text-2)",
+              fontSize: "var(--fs-12)", fontWeight: 500, color: "var(--text-2)",
               textTransform: "uppercase", letterSpacing: "0.06em",
               marginBottom: 6, display: "block",
             }}>E-mail</label>
@@ -105,7 +105,7 @@ export default function Login() {
                   color: "var(--text-1)",
                   padding: "9px 12px 9px 36px",
                   borderRadius: "var(--radius-md)",
-                  fontSize: 14,
+                  fontSize: "var(--fs-14)",
                   fontFamily: "var(--font-sans)",
                   outline: "none",
                   transition: "var(--transition)",
@@ -118,7 +118,7 @@ export default function Login() {
 
           <div style={{ marginBottom: 8 }}>
             <label style={{
-              fontSize: 12, fontWeight: 500, color: "var(--text-2)",
+              fontSize: "var(--fs-12)", fontWeight: 500, color: "var(--text-2)",
               textTransform: "uppercase", letterSpacing: "0.06em",
               marginBottom: 6, display: "block",
             }}>Senha</label>
@@ -140,7 +140,7 @@ export default function Login() {
                   color: "var(--text-1)",
                   padding: "9px 12px 9px 36px",
                   borderRadius: "var(--radius-md)",
-                  fontSize: 14,
+                  fontSize: "var(--fs-14)",
                   fontFamily: "var(--font-sans)",
                   outline: "none",
                   transition: "var(--transition)",
@@ -153,7 +153,7 @@ export default function Login() {
 
           <div style={{ textAlign: "right", marginBottom: 20 }}>
             <Link to="/recuperar-senha" style={{
-              fontSize: 12, color: "var(--text-2)", textDecoration: "none",
+              fontSize: "var(--fs-12)", color: "var(--text-2)", textDecoration: "none",
             }}>
               Esqueceu a senha?
             </Link>
@@ -164,11 +164,11 @@ export default function Login() {
             disabled={loading}
             style={{
               width: "100%",
-              background: "var(--primary)",
+              background: "var(--primary-strong)",
               color: "#fff",
               padding: "8px 16px",
               borderRadius: "var(--radius-md)",
-              fontSize: 13,
+              fontSize: "var(--fs-13)",
               fontWeight: 500,
               border: "none",
               cursor: loading ? "not-allowed" : "pointer",
@@ -193,13 +193,13 @@ export default function Login() {
           margin: "20px 0",
         }}>
           <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
-          <span style={{ fontSize: 12, color: "var(--text-3)" }}>ou</span>
+          <span style={{ fontSize: "var(--fs-12)", color: "var(--text-3)" }}>ou</span>
           <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
         </div>
 
         <div style={{ textAlign: "center" }}>
           <Link to="/cadastro" style={{
-            fontSize: 13, color: "var(--text-2)", textDecoration: "none",
+            fontSize: "var(--fs-13)", color: "var(--text-2)", textDecoration: "none",
           }}>
             Criar uma conta
           </Link>

@@ -65,7 +65,7 @@ export default function NovaOrdemServico() {
           { label: "Ordens de Serviço", to: "/ordens-servico" },
           { label: "Nova" },
         ]} />
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Nova Ordem de Serviço</h1>
+        <h1 style={{ fontSize: "var(--fs-24)", fontWeight: 700, color: "var(--text-1)" }}>Nova Ordem de Serviço</h1>
       </div>
 
       {/* Form Card */}
@@ -82,7 +82,7 @@ export default function NovaOrdemServico() {
             border: "1px solid rgba(248,113,113,0.2)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
-            fontSize: 13,
+            fontSize: "var(--fs-13)",
             color: "var(--alta)",
             marginBottom: 16,
           }}>{erro}</div>
@@ -137,16 +137,16 @@ export default function NovaOrdemServico() {
 
           <div style={{ display: "flex", gap: 8 }}>
             <button type="submit" disabled={loading} style={{
-              background: "var(--primary)", color: "#fff",
+              background: "var(--primary-strong)", color: "#fff",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: 13, fontWeight: 500, border: "none",
+              fontSize: "var(--fs-13)", fontWeight: 500, border: "none",
               cursor: loading ? "not-allowed" : "pointer",
               transition: "var(--transition)",
               display: "flex", alignItems: "center", gap: 6,
               opacity: loading ? 0.7 : 1,
             }}
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--primary-dark)"; }}
-              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
               {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={15} />}
               Cadastrar OS
@@ -155,7 +155,7 @@ export default function NovaOrdemServico() {
               background: "var(--surface-3)", color: "var(--text-1)",
               border: "1px solid var(--border)",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: 13, fontWeight: 500, cursor: "pointer",
+              fontSize: "var(--fs-13)", fontWeight: 500, cursor: "pointer",
               transition: "var(--transition)",
               display: "flex", alignItems: "center", gap: 6,
             }}>

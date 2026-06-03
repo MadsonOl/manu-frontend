@@ -1,62 +1,52 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
+import { useApiData } from "../hooks/useApiData";
 import Modal from "../components/Modal";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { PriorityBadge, StatusBadge } from "../components/ui/Badge";
 import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
 import Pagination from "../components/ui/Pagination";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import ErrorState from "../components/ui/ErrorState";
+import ColdStartBanner from "../components/ui/ColdStartBanner";
 import { selectStyle } from "../components/ui/InputStyles";
 import {
   Eye, CheckSquare, Trash2, Inbox, Filter,
 } from "lucide-react";
 
 export default function OrdensServico() {
-  const [ordens, setOrdens] = useState([]);
+  const carregar = useCallback(() => api.get("/ordens-servico").then((r) => r.data), []);
+  const { data, setData: setOrdens, loading, error, slow, reload } = useApiData(carregar);
+  const ordens = data || [];
+
   const [selecionada, setSelecionada] = useState(null);
   const [filtroProfissional, setFiltroProfissional] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroData, setFiltroData] = useState("");
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmFinalizar, setConfirmFinalizar] = useState(null);
   const perPage = 10;
   const { showToast } = useToast();
-
-  useEffect(() => {
-    carregarOrdens();
-  }, []);
-
-  async function carregarOrdens() {
-    setLoading(true);
-    try {
-      const res = await api.get("/ordens-servico");
-      setOrdens(res.data);
-    } catch {
-      showToast("Erro ao carregar ordens de serviço", "error");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function finalizar(id) {
     try {
       await api.patch(`/ordens-servico/${id}/finalizar`);
-      carregarOrdens();
+      reload();
       showToast("Ordem de serviço finalizada", "success");
-    } catch {
-      showToast("Erro ao finalizar OS", "error");
+    } catch (e) {
+      showToast(e.message, "error");
     }
   }
 
   async function excluir(id) {
     try {
       await api.delete(`/ordens-servico/${id}`);
-      setOrdens(ordens.filter((o) => o.id !== id));
+      setOrdens((prev) => prev.filter((o) => o.id !== id));
       showToast("Ordem de serviço excluída", "success");
-    } catch {
-      showToast("Erro ao excluir OS", "error");
+    } catch (e) {
+      showToast(e.message, "error");
     }
   }
 
@@ -82,7 +72,7 @@ export default function OrdensServico() {
             { label: "Dashboard", to: "/dashboard" },
             { label: "Ordens de Serviço" },
           ]} />
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-1)" }}>Ordens de Serviço</h1>
+          <h1 style={{ fontSize: "var(--fs-24)", fontWeight: 700, color: "var(--text-1)" }}>Ordens de Serviço</h1>
         </div>
       </div>
 
@@ -104,13 +94,16 @@ export default function OrdensServico() {
         />
       </div>
 
+      {/* Aviso de cold start durante carregamento demorado */}
+      {loading && slow && <ColdStartBanner />}
+
       {/* Table */}
       <div style={{
         background: "var(--surface-1)", border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)", overflow: "hidden",
       }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="reflow-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
                 {["ID", "Data", "Local", "Descrição", "Prioridade", "Solicitante", "Profissional", "Empresa", "Status", "Ações"].map((h) => (
@@ -119,12 +112,16 @@ export default function OrdensServico() {
               </tr>
             </thead>
             <tbody>
-              {loading ? <SkeletonRows cols={10} /> : paginated.length === 0 ? (
+              {error ? (
+                <tr>
+                  <td colSpan="10"><ErrorState message={error} onRetry={reload} /></td>
+                </tr>
+              ) : loading ? <SkeletonRows cols={10} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="10" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-2)" }}>Nenhum registro encontrado</div>
-                    <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>As ordens de serviço aparecerão aqui</div>
+                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhum registro encontrado</div>
+                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>As ordens de serviço aparecerão aqui</div>
                   </td>
                 </tr>
               ) : paginated.map((o, i) => (
@@ -135,18 +132,18 @@ export default function OrdensServico() {
                   onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface-hover)"}
                   onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <td style={tdStyle}>{o.id}</td>
-                  <td style={tdStyle}>{o.data}</td>
-                  <td style={tdStyle}>{o.local}</td>
-                  <td style={{ ...tdStyle, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.descricao}</td>
-                  <td style={{ padding: "13px 16px" }}><PriorityBadge value={o.prioridade} /></td>
-                  <td style={tdStyle}>{o.solicitante}</td>
-                  <td style={tdStyle}>{o.profissional}</td>
-                  <td style={tdStyle}>{o.empresa?.nome || "—"}</td>
-                  <td style={{ padding: "13px 16px" }}><StatusBadge value={o.status} /></td>
-                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }}>
+                  <td style={tdStyle} data-label="ID">{o.id}</td>
+                  <td style={tdStyle} data-label="Data">{o.data}</td>
+                  <td style={tdStyle} data-label="Local">{o.local}</td>
+                  <td style={{ ...tdStyle, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} data-label="Descrição">{o.descricao}</td>
+                  <td style={{ padding: "13px 16px" }} data-label="Prioridade"><PriorityBadge value={o.prioridade} /></td>
+                  <td style={tdStyle} data-label="Solicitante">{o.solicitante}</td>
+                  <td style={tdStyle} data-label="Profissional">{o.profissional}</td>
+                  <td style={tdStyle} data-label="Empresa">{o.empresa?.nome || "—"}</td>
+                  <td style={{ padding: "13px 16px" }} data-label="Status"><StatusBadge value={o.status} /></td>
+                  <td style={{ padding: "13px 16px", display: "flex", gap: 4 }} data-label="Ações">
                     <GhostBtn icon={Eye} title="Ver OS" hoverColor="var(--primary)" onClick={() => setSelecionada(o)} />
-                    <GhostBtn icon={CheckSquare} title="Finalizar" hoverColor="var(--finalizado)" onClick={() => finalizar(o.id)} />
+                    <GhostBtn icon={CheckSquare} title="Finalizar" hoverColor="var(--finalizado)" onClick={() => setConfirmFinalizar(o.id)} />
                     <GhostBtn icon={Trash2} title="Excluir" hoverColor="var(--alta)" onClick={() => setConfirmDelete(o.id)} />
                   </td>
                 </tr>
@@ -155,7 +152,7 @@ export default function OrdensServico() {
           </table>
         </div>
 
-        {!loading && ordensFiltradas.length > 0 && (
+        {!loading && !error && ordensFiltradas.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}
@@ -176,7 +173,7 @@ export default function OrdensServico() {
             style={{
               background: "var(--surface-3)", color: "var(--text-1)",
               border: "1px solid var(--border)", padding: "8px 16px",
-              borderRadius: "var(--radius-md)", fontSize: 13, fontWeight: 500, cursor: "pointer",
+              borderRadius: "var(--radius-md)", fontSize: "var(--fs-13)", fontWeight: 500, cursor: "pointer",
             }}>
             Fechar
           </button>
@@ -194,15 +191,15 @@ export default function OrdensServico() {
               ["Status", selecionada.status],
             ].map(([label, value]) => (
               <div key={label}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: 14, color: "var(--text-1)" }}>{value}</div>
+                <div style={{ fontSize: "var(--fs-12)", fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: "var(--fs-14)", color: "var(--text-1)" }}>{value}</div>
               </div>
             ))}
 
             {selecionada.empresa && (
               <>
                 <div style={{ borderTop: "1px solid var(--border)", margin: "4px 0" }} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>Empresa</div>
+                <div style={{ fontSize: "var(--fs-13)", fontWeight: 600, color: "var(--text-2)" }}>Empresa</div>
                 {[
                   ["Nome", selecionada.empresa.nome],
                   ["CNPJ", selecionada.empresa.cnpj],
@@ -210,8 +207,8 @@ export default function OrdensServico() {
                   ["Gestor de Manutenção", selecionada.empresa.gestor_manutencao],
                 ].map(([label, value]) => value ? (
                   <div key={label}>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
-                    <div style={{ fontSize: 14, color: "var(--text-1)" }}>{value}</div>
+                    <div style={{ fontSize: "var(--fs-12)", fontWeight: 500, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: "var(--fs-14)", color: "var(--text-1)" }}>{value}</div>
                   </div>
                 ) : null)}
               </>
@@ -226,6 +223,16 @@ export default function OrdensServico() {
         onClose={() => setConfirmDelete(null)}
         onConfirm={() => excluir(confirmDelete)}
         message="Deseja excluir esta ordem de serviço? Esta ação não pode ser desfeita."
+      />
+
+      {/* Confirm Finalizar (acao irreversivel) */}
+      <ConfirmDialog
+        isOpen={!!confirmFinalizar}
+        onClose={() => setConfirmFinalizar(null)}
+        onConfirm={() => finalizar(confirmFinalizar)}
+        title="Finalizar ordem de serviço"
+        message="Deseja finalizar esta ordem de serviço? Esta ação não pode ser desfeita."
+        confirmLabel="Finalizar"
       />
     </div>
   );

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import Modal from "./Modal";
 import {
   Wrench, Lightbulb, LayoutDashboard, ClipboardList, BarChart2,
@@ -20,6 +21,24 @@ export default function Sidebar({ isOpen, onClose }) {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const [showLogout, setShowLogout] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const navRef = useRef(null);
+
+  // No mobile, o drawer aberto: trava a rolagem do fundo, fecha com Esc e
+  // recebe o foco no primeiro item.
+  useEffect(() => {
+    if (!isMobile || !isOpen) return;
+    document.body.style.overflow = "hidden";
+    navRef.current?.querySelector("a")?.focus();
+    function onKeyDown(e) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [isMobile, isOpen, onClose]);
 
   async function handleLogout() {
     await logout();
@@ -58,7 +77,16 @@ export default function Sidebar({ isOpen, onClose }) {
         />
       )}
 
-      <aside style={sidebarStyle} className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
+      {/*
+        Quando fora da tela no mobile (drawer fechado), a sidebar fica inerte:
+        seus links nao recebem foco por teclado nem aparecem para leitores de
+        tela. No desktop ela esta sempre visivel, entao nunca e inerte.
+      */}
+      <aside
+        style={sidebarStyle}
+        className={`sidebar ${isOpen ? "sidebar-open" : ""}`}
+        inert={isMobile && !isOpen ? true : undefined}
+      >
         {/* Logo */}
         <div style={{
           paddingBottom: 20,
@@ -67,15 +95,15 @@ export default function Sidebar({ isOpen, onClose }) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Lightbulb size={16} style={{ color: "var(--primary)" }} />
-            <span style={{ fontWeight: 700, fontSize: 18, color: "var(--text-1)" }}>manu</span>
+            <span style={{ fontWeight: 700, fontSize: "var(--fs-18)", color: "var(--text-1)" }}>manu</span>
           </div>
-          <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2, paddingLeft: 24 }}>
+          <div style={{ fontSize: "var(--fs-11)", color: "var(--text-3)", marginTop: 2, paddingLeft: 24 }}>
             Gestão de Manutenções
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1 }}>
+        <nav ref={navRef} aria-label="Navegacao principal" style={{ flex: 1 }}>
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -87,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 gap: 10,
                 padding: isActive ? "8px 10px 8px 8px" : "8px 10px",
                 borderRadius: "var(--radius-md)",
-                fontSize: 13,
+                fontSize: "var(--fs-13)",
                 fontWeight: isActive ? 600 : 500,
                 color: isActive ? "var(--primary)" : "var(--text-2)",
                 textDecoration: "none",
@@ -124,7 +152,7 @@ export default function Sidebar({ isOpen, onClose }) {
           paddingTop: 16,
         }}>
           <div style={{
-            fontSize: 12,
+            fontSize: "var(--fs-12)",
             color: "var(--text-3)",
             marginBottom: 8,
             overflow: "hidden",
@@ -143,7 +171,7 @@ export default function Sidebar({ isOpen, onClose }) {
               width: "100%",
               padding: "8px 10px",
               borderRadius: "var(--radius-md)",
-              fontSize: 13,
+              fontSize: "var(--fs-13)",
               fontWeight: 500,
               color: "var(--text-2)",
               background: "transparent",
@@ -176,7 +204,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 border: "1px solid var(--border)",
                 padding: "8px 16px",
                 borderRadius: "var(--radius-md)",
-                fontSize: 13,
+                fontSize: "var(--fs-13)",
                 fontWeight: 500,
                 cursor: "pointer",
                 transition: "var(--transition)",
@@ -187,12 +215,12 @@ export default function Sidebar({ isOpen, onClose }) {
             <button
               onClick={handleLogout}
               style={{
-                background: "var(--alta)",
+                background: "var(--danger-strong)",
                 color: "#fff",
                 border: "none",
                 padding: "8px 16px",
                 borderRadius: "var(--radius-md)",
-                fontSize: 13,
+                fontSize: "var(--fs-13)",
                 fontWeight: 500,
                 cursor: "pointer",
                 display: "flex",
@@ -209,7 +237,7 @@ export default function Sidebar({ isOpen, onClose }) {
       >
         <div style={{ textAlign: "center" }}>
           <LogOut size={32} style={{ color: "var(--text-2)", marginBottom: 16 }} />
-          <p style={{ fontSize: 14, color: "var(--text-2)" }}>
+          <p style={{ fontSize: "var(--fs-14)", color: "var(--text-2)" }}>
             Tem certeza que deseja encerrar sua sessão?
           </p>
         </div>
