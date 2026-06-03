@@ -13,11 +13,25 @@
   --primary-dark: #357ABD;
   --primary-muted:rgba(74,144,217,0.12);
   --primary-ring: rgba(74,144,217,0.25);
+  /*
+   * Fundos para botoes solidos com texto branco. O --primary/--alta sao claros
+   * o bastante para servir de acento/texto sobre o fundo escuro, mas dao apenas
+   * ~3:1 com texto branco. Estes tons mais escuros garantem >= 4.5:1 (AA) com
+   * branco. WCAG 1.4.3.
+   */
+  --primary-strong: #2966B0;
+  --danger-strong:  #C23B36;
 
   /* Texto */
   --text-1: #F0F0F3;
   --text-2: #A0A0AB;
-  --text-3: #606068;
+  /*
+   * Texto terciario (rotulos de cards, subtitulos, cabecalhos de tabela,
+   * placeholders). Elevado de #606068 (~3:1, reprovava) para #8A8A94, que
+   * atinge >= 4.5:1 sobre o fundo e as superficies de card, mantendo a
+   * hierarquia abaixo de --text-2. WCAG 1.4.3 (contraste minimo, texto normal).
+   */
+  --text-3: #8A8A94;
 
   /* Status */
   --alta:          #F87171;
@@ -39,6 +53,25 @@
   /* Tipografia */
   --font-sans: 'Inter', system-ui, sans-serif;
 
+  /*
+   * Tokens de tamanho de fonte em rem (base 16px).
+   * Como os componentes usam estilos inline com px literais, escalar o texto
+   * via root font-size exige que o texto seja expresso em unidade relativa.
+   * Cada token = valor-px / 16. Ao alterar a font-size do <html> (provider de
+   * acessibilidade), todo o texto escala junto, sem afetar icones/espacamentos
+   * (que seguem em px). WCAG 1.4.4 - redimensionamento de texto.
+   */
+  --fs-11: 0.6875rem;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-15: 0.9375rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-28: 1.75rem;
+
   /* Raios */
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -48,6 +81,108 @@
   /* Transições */
   --transition: all 0.15s ease;
   --transition-slow: all 0.25s ease;
+}
+
+/*
+ * Base de escala de fonte. Usar % preserva a preferencia de fonte do navegador
+ * do usuario como ponto de partida. O provider de acessibilidade sobrescreve a
+ * font-size do <html> via estilo inline (100/125/150/200%) e, como o texto usa
+ * tokens em rem, tudo escala proporcionalmente. WCAG 1.4.4.
+ */
+html {
+  font-size: 100%;
+}
+
+/*
+ * Tema de alto contraste (WCAG 1.4.6, contraste >= 7:1). Ativado por
+ * [data-theme="hc"] no <html>. Como todo o estilo inline referencia estas
+ * CSS variables, basta sobrescrever os tokens aqui para o tema cascatear por
+ * toda a aplicacao, sem alterar componente a componente. Contrastes calculados
+ * sobre o fundo #000: texto-1 21:1, texto-2 ~17:1, texto-3 ~12:1, primary ~9:1.
+ */
+:root[data-theme="hc"] {
+  --bg:            #000000;
+  --surface-1:     #0A0A0C;
+  --surface-2:     #141418;
+  --surface-3:     #1F1F26;
+  --surface-hover: #2A2A33;
+  --border:        #6E6E7A;
+  --border-subtle: #4A4A55;
+
+  --primary:       #74B4FF;
+  --primary-dark:  #4A90D9;
+  --primary-muted: rgba(116,180,255,0.20);
+  --primary-ring:  rgba(116,180,255,0.55);
+  /* Botoes solidos no alto contraste: texto branco >= 7:1 (WCAG 1.4.6). */
+  --primary-strong: #1F4E85;
+  --danger-strong:  #8E2622;
+
+  --text-1: #FFFFFF;
+  --text-2: #E8E8EC;
+  --text-3: #C7C7D0;
+
+  --alta:          #FF9A9A;
+  --alta-bg:       rgba(255,154,154,0.16);
+  --normal:        #FFD24A;
+  --normal-bg:     rgba(255,210,74,0.16);
+  --baixa:         #4ADE9A;
+  --baixa-bg:      rgba(74,222,154,0.16);
+  --atendimento:   #FFD24A;
+  --atendimento-bg:rgba(255,210,74,0.16);
+  --finalizado:    #4ADE9A;
+  --finalizado-bg: rgba(74,222,154,0.16);
+}
+
+/*
+ * Paletas seguras por tipo de daltonismo (WCAG 1.4.1). Ativadas por [data-cb]
+ * no <html>. Sobrescrevem apenas os tons de status/prioridade; os badges
+ * continuam com icone + texto, que sao o indicador primario. Todos os tons
+ * foram escolhidos com contraste >= 4.5:1 sobre as superficies e com separacao
+ * de luminancia entre os niveis. As combinacoes evitam o eixo problematico de
+ * cada deficiencia (vermelho-verde em protan/deutan; azul-amarelo em tritan).
+ */
+
+/* Protanopia e Deuteranopia (deficiencia vermelho-verde): eixo azul/laranja/amarelo. */
+:root[data-cb="protanopia"],
+:root[data-cb="deuteranopia"] {
+  --alta:          #FF9E4A;
+  --alta-bg:       rgba(255,158,74,0.16);
+  --normal:        #FFD24A;
+  --normal-bg:     rgba(255,210,74,0.16);
+  --baixa:         #5AB6FF;
+  --baixa-bg:      rgba(90,182,255,0.16);
+  --atendimento:   #FFD24A;
+  --atendimento-bg:rgba(255,210,74,0.16);
+  --finalizado:    #3DDC97;
+  --finalizado-bg: rgba(61,220,151,0.16);
+}
+
+/* Tritanopia (deficiencia azul-amarelo): eixo vermelho/magenta/verde. */
+:root[data-cb="tritanopia"] {
+  --alta:          #FF6B6B;
+  --alta-bg:       rgba(255,107,107,0.16);
+  --normal:        #E59BFF;
+  --normal-bg:     rgba(229,155,255,0.16);
+  --baixa:         #4ADE9A;
+  --baixa-bg:      rgba(74,222,154,0.16);
+  --atendimento:   #E59BFF;
+  --atendimento-bg:rgba(229,155,255,0.16);
+  --finalizado:    #4ADE9A;
+  --finalizado-bg: rgba(74,222,154,0.16);
+}
+
+/* Acromatopsia (ausencia de cor): diferenciacao apenas por luminancia. */
+:root[data-cb="achromatopsia"] {
+  --alta:          #FFFFFF;
+  --alta-bg:       rgba(255,255,255,0.14);
+  --normal:        #C7C7D0;
+  --normal-bg:     rgba(199,199,208,0.14);
+  --baixa:         #9A9AA6;
+  --baixa-bg:      rgba(154,154,166,0.14);
+  --atendimento:   #C7C7D0;
+  --atendimento-bg:rgba(199,199,208,0.14);
+  --finalizado:    #FFFFFF;
+  --finalizado-bg: rgba(255,255,255,0.14);
 }
 
 /* ── Reset ── */
@@ -63,6 +198,32 @@ body {
   color: var(--text-1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Placeholders com contraste AA. Por padrao os navegadores reduzem a opacidade
+ * do placeholder, derrubando o contraste; fixamos a cor em --text-2 (~6:1) e
+ * opacity:1. WCAG 1.4.3.
+ */
+::placeholder {
+  color: var(--text-2);
+  opacity: 1;
+}
+
+/*
+ * Indicador de foco visivel e consistente em toda a navegacao (WCAG 2.4.7).
+ * :focus-visible mostra o anel apenas para foco por teclado, evitando ruido no
+ * clique de mouse. Aplicado a todos os controles (inclusive selects/inputs sem
+ * anel proprio) para que nenhum elemento focavel fique sem indicador. Campos
+ * que ja realcam a borda no foco apenas ganham um anel extra discreto.
+ */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* ── Scrollbar ── */
@@ -116,6 +277,63 @@ body {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+/*
+ * Tabelas responsivas (reflow). Em telas estreitas, cada linha de dados vira um
+ * cartao empilhado com rotulo: valor, eliminando a rolagem horizontal
+ * (WCAG 1.4.10 - reflow). Em desktop a tabela e mantida. Aplicado pela classe
+ * .reflow-table no <table>; cada <td> de dados traz data-label com o nome da
+ * coluna. O thead fica visualmente oculto, porem acessivel a leitores de tela.
+ */
+@media (max-width: 768px) {
+  .reflow-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .reflow-table tbody tr {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    background: var(--surface-1);
+  }
+  .reflow-table tbody td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px !important;
+    text-align: right;
+    border: none !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  /* Rotulo da coluna a esquerda de cada valor. */
+  .reflow-table tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: var(--fs-11);
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+    margin-right: auto;
+  }
+  /* Linhas de esqueleto/estado vazio (sem rotulo) ficam centralizadas. */
+  .reflow-table tbody td:not([data-label]) {
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 /* ── Print ── */

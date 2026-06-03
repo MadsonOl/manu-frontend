@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Modal from "./Modal";
+import AccessibilityMenu from "./AccessibilityMenu";
 import { ArrowLeft, LogOut, LogIn } from "lucide-react";
 
 const pageTitles = {
@@ -67,7 +68,7 @@ export default function Header({ variant = "public" }) {
             background: hoverBack ? "var(--surface-hover)" : "transparent",
             border: "none",
             color: "var(--text-2)",
-            fontSize: 13,
+            fontSize: "var(--fs-13)",
             fontWeight: 500,
             cursor: "pointer",
             padding: "6px 10px",
@@ -82,7 +83,7 @@ export default function Header({ variant = "public" }) {
         {/* Center — page title (only on private pages) */}
         {isPrivate && title && (
           <span style={{
-            fontSize: 15,
+            fontSize: "var(--fs-15)",
             fontWeight: 600,
             color: "var(--text-1)",
             position: "absolute",
@@ -93,56 +94,57 @@ export default function Header({ variant = "public" }) {
           </span>
         )}
 
-        {/* Right */}
-        {isPrivate ? (
-          <button
-            onClick={() => setShowLogout(true)}
-            onMouseEnter={() => setHoverLogout(true)}
-            onMouseLeave={() => setHoverLogout(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              background: hoverLogout ? "var(--alta-bg)" : "transparent",
-              border: "none",
-              color: hoverLogout ? "var(--alta)" : "var(--text-2)",
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: "pointer",
-              padding: "6px 10px",
-              borderRadius: "var(--radius-md)",
-              transition: "var(--transition)",
-            }}
-          >
-            <LogOut size={16} />
-            Sair
-          </button>
-        ) : !isLogin ? (
-          <button
-            onClick={() => navigate("/login")}
-            onMouseEnter={() => setHoverGestor(true)}
-            onMouseLeave={() => setHoverGestor(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              background: hoverGestor ? "var(--primary-dark)" : "var(--primary)",
-              border: "none",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              padding: "8px 16px",
-              borderRadius: "var(--radius-md)",
-              transition: "var(--transition)",
-            }}
-          >
-            <LogIn size={16} />
-            Acesso Gestor
-          </button>
-        ) : (
-          <div style={{ width: 80 }} />
-        )}
+        {/* Right — controle de acessibilidade (sempre visivel) + acao da pagina */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <AccessibilityMenu />
+          {isPrivate ? (
+            <button
+              onClick={() => setShowLogout(true)}
+              onMouseEnter={() => setHoverLogout(true)}
+              onMouseLeave={() => setHoverLogout(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: hoverLogout ? "var(--alta-bg)" : "transparent",
+                border: "none",
+                color: hoverLogout ? "var(--alta)" : "var(--text-2)",
+                fontSize: "var(--fs-13)",
+                fontWeight: 500,
+                cursor: "pointer",
+                padding: "6px 10px",
+                borderRadius: "var(--radius-md)",
+                transition: "var(--transition)",
+              }}
+            >
+              <LogOut size={16} />
+              Sair
+            </button>
+          ) : !isLogin ? (
+            <button
+              onClick={() => navigate("/login")}
+              onMouseEnter={() => setHoverGestor(true)}
+              onMouseLeave={() => setHoverGestor(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                background: hoverGestor ? "var(--primary-dark)" : "var(--primary-strong)",
+                border: "none",
+                color: "#fff",
+                fontSize: "var(--fs-13)",
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "8px 16px",
+                borderRadius: "var(--radius-md)",
+                transition: "var(--transition)",
+              }}
+            >
+              <LogIn size={16} />
+              Acesso Gestor
+            </button>
+          ) : null}
+        </div>
       </header>
 
       {/* Logout confirmation modal (only relevant for private) */}
@@ -161,7 +163,7 @@ export default function Header({ variant = "public" }) {
                   border: "1px solid var(--border)",
                   padding: "8px 16px",
                   borderRadius: "var(--radius-md)",
-                  fontSize: 13,
+                  fontSize: "var(--fs-13)",
                   fontWeight: 500,
                   cursor: "pointer",
                   transition: "var(--transition)",
@@ -172,12 +174,12 @@ export default function Header({ variant = "public" }) {
               <button
                 onClick={handleLogout}
                 style={{
-                  background: "var(--alta)",
+                  background: "var(--danger-strong)",
                   color: "#fff",
                   border: "none",
                   padding: "8px 16px",
                   borderRadius: "var(--radius-md)",
-                  fontSize: 13,
+                  fontSize: "var(--fs-13)",
                   fontWeight: 500,
                   cursor: "pointer",
                   display: "flex",
@@ -194,7 +196,7 @@ export default function Header({ variant = "public" }) {
         >
           <div style={{ textAlign: "center" }}>
             <LogOut size={32} style={{ color: "var(--text-2)", marginBottom: 16 }} />
-            <p style={{ fontSize: 14, color: "var(--text-2)" }}>
+            <p style={{ fontSize: "var(--fs-14)", color: "var(--text-2)" }}>
               Tem certeza que deseja encerrar sua sessao?
             </p>
           </div>
