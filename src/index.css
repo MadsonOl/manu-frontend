@@ -155,6 +155,12 @@ html {
   --atendimento-bg:rgba(255,210,74,0.16);
   --finalizado:    #3DDC97;
   --finalizado-bg: rgba(61,220,151,0.16);
+  /* Cor de acao (botoes/links): azul-indigo, distinguivel no eixo seguro. */
+  --primary:        #6FA0FF;
+  --primary-dark:   #244E9E;
+  --primary-strong: #2E63C7;
+  --primary-muted:  rgba(111,160,255,0.18);
+  --primary-ring:   rgba(111,160,255,0.45);
 }
 
 /* Tritanopia (deficiencia azul-amarelo): eixo vermelho/magenta/verde. */
@@ -169,6 +175,12 @@ html {
   --atendimento-bg:rgba(229,155,255,0.16);
   --finalizado:    #4ADE9A;
   --finalizado-bg: rgba(74,222,154,0.16);
+  /* Cor de acao: roxo — o azul e problematico na tritanopia. */
+  --primary:        #B58CFF;
+  --primary-dark:   #57309E;
+  --primary-strong: #6D3FD4;
+  --primary-muted:  rgba(181,140,255,0.18);
+  --primary-ring:   rgba(181,140,255,0.45);
 }
 
 /* Acromatopsia (ausencia de cor): diferenciacao apenas por luminancia. */
@@ -183,6 +195,12 @@ html {
   --atendimento-bg:rgba(199,199,208,0.14);
   --finalizado:    #FFFFFF;
   --finalizado-bg: rgba(255,255,255,0.14);
+  /* Cor de acao: tons neutros — sem cor, a distincao e por luminancia. */
+  --primary:        #C7C7D0;
+  --primary-dark:   #5A5A66;
+  --primary-strong: #4A4A55;
+  --primary-muted:  rgba(199,199,208,0.18);
+  --primary-ring:   rgba(199,199,208,0.45);
 }
 
 /* ── Reset ── */

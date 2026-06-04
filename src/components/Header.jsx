@@ -15,6 +15,26 @@ const pageTitles = {
   "/profissionais": "Profissionais",
 };
 
+/*
+ * Destino do botao "Voltar": um nivel logico acima de cada rota, em vez do
+ * historico do navegador (navigate(-1)). Assim sair do painel do gestor leva
+ * direto ao topo (subpagina -> Dashboard -> inicio), sem precisar desfazer cada
+ * navegacao visitada.
+ */
+const rotaPai = {
+  "/login": "/",
+  "/cadastro": "/login",
+  "/recuperar-senha": "/login",
+  "/sobre": "/",
+  "/dashboard": "/",
+  "/chamados": "/dashboard",
+  "/ordens-servico": "/dashboard",
+  "/ordens-servico/nova": "/ordens-servico",
+  "/relatorios": "/dashboard",
+  "/empresas": "/dashboard",
+  "/profissionais": "/dashboard",
+};
+
 export default function Header({ variant = "public" }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -29,7 +49,10 @@ export default function Header({ variant = "public" }) {
   const title = pageTitles[location.pathname] || "";
 
   function handleBack() {
-    if (window.history.length > 1) {
+    const pai = rotaPai[location.pathname];
+    if (pai) {
+      navigate(pai);
+    } else if (window.history.length > 1) {
       navigate(-1);
     } else {
       navigate("/");
