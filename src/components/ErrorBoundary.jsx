@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { captureException } from "../lib/monitoring";
 
 /*
  * Captura erros de renderizacao em qualquer ponto da arvore e exibe uma tela de
@@ -13,7 +14,8 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(erro, info) {
-    // Ponto de envio para um servico de monitoramento de erros em producao.
+    // Envia ao monitoramento de erros (Sentry, se configurado).
+    captureException(erro, { componentStack: info?.componentStack });
     if (import.meta.env.DEV) {
       console.error("ErrorBoundary capturou um erro:", erro, info);
     }

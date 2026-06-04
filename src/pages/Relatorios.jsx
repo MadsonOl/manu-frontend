@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react";
-import api from "../services/api";
-import { useApiData } from "../hooks/useApiData";
+import { useState } from "react";
+import { useOrdens } from "../hooks/useOrdens";
+import { useSlowHint } from "../hooks/useSlowHint";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { PriorityBadge, StatusBadge } from "../components/ui/Badge";
 import { SkeletonRows, thStyle, tdStyle } from "../components/ui/TableUtils";
@@ -11,9 +11,9 @@ import { selectStyle } from "../components/ui/InputStyles";
 import { Printer, Inbox, Filter } from "lucide-react";
 
 export default function Relatorios() {
-  const carregar = useCallback(() => api.get("/ordens-servico").then((r) => r.data), []);
-  const { data, loading, error, slow, reload } = useApiData(carregar);
-  const ordens = data || [];
+  const { data, isLoading, isError, error, refetch } = useOrdens();
+  const ordens = data ?? [];
+  const slow = useSlowHint(isLoading);
 
   const [filtroProfissional, setFiltroProfissional] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
@@ -83,7 +83,7 @@ export default function Relatorios() {
       </div>
 
       {/* Aviso de cold start durante carregamento demorado */}
-      {loading && slow && <ColdStartBanner />}
+      {isLoading && slow && <ColdStartBanner />}
 
       {/* Table */}
       <div style={{
@@ -100,11 +100,11 @@ export default function Relatorios() {
               </tr>
             </thead>
             <tbody>
-              {error ? (
+              {isError ? (
                 <tr>
-                  <td colSpan="8"><ErrorState message={error} onRetry={reload} /></td>
+                  <td colSpan="8"><ErrorState message={error.message} onRetry={refetch} /></td>
                 </tr>
-              ) : loading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
+              ) : isLoading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="8" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
@@ -134,7 +134,7 @@ export default function Relatorios() {
           </table>
         </div>
 
-        {!loading && !error && ordensFiltradas.length > 0 && (
+        {!isLoading && !isError && ordensFiltradas.length > 0 && (
           <div className="no-print">
             <Pagination
               page={page}

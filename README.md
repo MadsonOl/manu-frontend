@@ -8,10 +8,12 @@ Interface web desenvolvida em React para gestores e usuários externos do sistem
 
 - **React 19** — biblioteca principal para construção da interface
 - **Vite 8** — bundler e servidor de desenvolvimento
-- **React Router DOM 7** — gerenciamento de rotas SPA
-- **Firebase 12** — autenticação de gestores (email/senha)
+- **React Router DOM 7** — gerenciamento de rotas SPA (com code splitting)
+- **TanStack Query (React Query)** — cache, deduplicação e revalidação dos dados
+- **Firebase 12** — autenticação de gestores (carregado sob demanda)
 - **Axios** — cliente HTTP para comunicação com a API
 - **Lucide React** — biblioteca de ícones
+- **Sentry + web-vitals** — monitoramento de erros e Core Web Vitals (opcional, por env)
 - **Vitest + React Testing Library** — testes unitários e de componentes
 - **ESLint** — linting e qualidade de código
 
@@ -73,6 +75,7 @@ Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 | `VITE_FIREBASE_APP_ID` | ID do app no Firebase | Console do Firebase → Configurações do projeto → Configuração do SDK |
 | `VITE_FIREBASE_MEASUREMENT_ID` | ID de medição do Google Analytics | Console do Firebase → Configurações do projeto → Configuração do SDK |
 | `VITE_API_URL` | URL base da API do backend | Endereço onde o manu-backend está rodando |
+| `VITE_SENTRY_DSN` | (Opcional) DSN do Sentry para monitoramento de erros | Painel do Sentry → Project Settings → Client Keys (DSN) |
 
 Exemplo:
 
@@ -109,14 +112,16 @@ src/
 │   └── ui/                  # Badge, Breadcrumb, ConfirmDialog, Field,
 │                            # ErrorState, ColdStartBanner, Pagination, etc.
 ├── contexts/                # Auth, Toast e Accessibility (provider + hook)
-├── hooks/                   # useApiData, useMediaQuery
+├── hooks/                   # Queries/mutations (React Query) por recurso,
+│                            # useSlowHint, useMediaQuery
+├── lib/                     # queryClient (React Query), monitoring, webVitals
 ├── utils/                   # masks.js, validators.js (CPF/CNPJ com DV)
 ├── services/                # api.js (Axios + interceptor) e apiErrors.js
 ├── config/                  # env.js (validação de variáveis de ambiente)
 ├── test/                    # Vitest (masks, validators, apiErrors, Field, ...)
 ├── App.jsx                  # Árvore da aplicação (providers + rotas)
-├── main.jsx                 # Bootstrap (createRoot)
-├── firebase.js              # Inicialização do Firebase
+├── main.jsx                 # Bootstrap (createRoot + observabilidade)
+├── firebase.js              # Inicialização preguiçosa (lazy) do Firebase
 └── index.css                # Estilos globais, tokens e temas
 ```
 
@@ -181,6 +186,12 @@ Robustez e operação:
 - **Tratamento de erros** centralizado com mensagens claras (cold start,
   offline, sessão expirada, etc.) e **timeout** de 75 s.
 - **Code splitting por rota** reduz o JavaScript de carregamento inicial.
+- **Cache de dados com React Query** (deduplicação, revalidação e retry seletivo)
+  reduz chamadas e torna a navegação instantânea entre telas que compartilham dados.
+- **Firebase carregado sob demanda** — sai do caminho crítico de renderização,
+  acelerando o primeiro paint (sobretudo nas páginas públicas).
+- **Observabilidade opcional**: Sentry (erros) + Web Vitals, ativados por env e
+  sem custo no bundle quando não configurados.
 - **Testes** com Vitest (`npm run test`). Detalhes do ciclo de evolução em
   [`docs/RELATORIO-TRANSFORMACAO-DIGITAL.md`](docs/RELATORIO-TRANSFORMACAO-DIGITAL.md).
 

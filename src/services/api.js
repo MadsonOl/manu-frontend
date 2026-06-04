@@ -1,5 +1,5 @@
 import axios from "axios";
-import { auth } from "../firebase";
+import { getFirebaseAuth } from "../firebase";
 import { mensagemDeErro } from "./apiErrors";
 
 export { mensagemDeErro };
@@ -12,9 +12,11 @@ const api = axios.create({
   timeout: 75000,
 });
 
-const getToken = () => {
+const getToken = async () => {
+  const auth = await getFirebaseAuth();
+  const { onAuthStateChanged } = await import("firebase/auth");
   return new Promise((resolve) => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       unsubscribe();
       if (user) {
         try {

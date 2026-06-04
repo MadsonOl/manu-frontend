@@ -14,5 +14,19 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/test/setup.js",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "text-summary"],
+      // Foco da cobertura: regras de negocio e componentes (exclui bootstrap,
+      // estilos e arquivos de configuracao sem logica testavel).
+      include: ["src/**/*.{js,jsx}"],
+      exclude: [
+        "src/main.jsx",
+        "src/firebase.js",
+        "src/**/*.test.{js,jsx}",
+        "src/test/**",
+        "src/index.css",
+      ],
+    },
   },
 }))

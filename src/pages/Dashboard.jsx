@@ -1,7 +1,8 @@
-import { useCallback } from "react";
 import { Link } from "react-router-dom";
-import api from "../services/api";
-import { useApiData } from "../hooks/useApiData";
+import { useChamados } from "../hooks/useChamados";
+import { useOrdens } from "../hooks/useOrdens";
+import { useProfissionais } from "../hooks/useProfissionais";
+import { useSlowHint } from "../hooks/useSlowHint";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import ColdStartBanner from "../components/ui/ColdStartBanner";
 import {
@@ -25,23 +26,23 @@ const statCards = [
 ];
 
 export default function Dashboard() {
-  // Cada chamada tem seu proprio catch para que uma falha isolada nao zere todo
-  // o painel; o cartao apenas mostra 0. O hook ainda sinaliza cold start (slow).
-  const carregarStats = useCallback(async () => {
-    const [chamRes, osRes, profRes] = await Promise.all([
-      api.get("/chamados").catch(() => ({ data: [] })),
-      api.get("/ordens-servico").catch(() => ({ data: [] })),
-      api.get("/profissionais").catch(() => ({ data: [] })),
-    ]);
-    const ordens = osRes.data;
-    return {
-      chamados: chamRes.data.length,
-      ordensAtendimento: ordens.filter((o) => o.status !== "FINALIZADO").length,
-      ordensFinalizado: ordens.filter((o) => o.status === "FINALIZADO").length,
-      profissionais: profRes.data.length,
-    };
-  }, []);
-  const { data: stats, loading: loadingStats, slow } = useApiData(carregarStats);
+  // Reaproveita as mesmas queries das telas de lista (cache compartilhado): ao
+  // navegar para Chamados/Ordens/Profissionais os dados ja estarao prontos.
+  // Uma falha isolada apenas zera o cartao correspondente (data ?? []).
+  const chamadosQ = useChamados();
+  const ordensQ = useOrdens();
+  const profissionaisQ = useProfissionais();
+
+  const loadingStats = chamadosQ.isLoading || ordensQ.isLoading || profissionaisQ.isLoading;
+  const slow = useSlowHint(loadingStats);
+
+  const ordens = ordensQ.data ?? [];
+  const stats = {
+    chamados: (chamadosQ.data ?? []).length,
+    ordensAtendimento: ordens.filter((o) => o.status !== "FINALIZADO").length,
+    ordensFinalizado: ordens.filter((o) => o.status === "FINALIZADO").length,
+    profissionais: (profissionaisQ.data ?? []).length,
+  };
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>

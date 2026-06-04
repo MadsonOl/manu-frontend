@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
-import api from "../services/api";
+import { useState } from "react";
 import { useToast } from "../contexts/ToastContext";
-import { useApiData } from "../hooks/useApiData";
+import { useEmpresas, useSalvarEmpresa, useExcluirEmpresa } from "../hooks/useEmpresas";
+import { useSlowHint } from "../hooks/useSlowHint";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
 import Pagination from "../components/ui/Pagination";
@@ -15,9 +15,11 @@ import { validarCNPJ } from "../utils/validators";
 import { Plus, Trash2, Inbox, Loader2, Pencil, X } from "lucide-react";
 
 export default function Empresas() {
-  const carregar = useCallback(() => api.get("/empresas").then((r) => r.data), []);
-  const { data, setData: setEmpresas, loading, error, slow, reload } = useApiData(carregar);
-  const empresas = data || [];
+  const { data, isLoading, isError, error, refetch } = useEmpresas();
+  const empresas = data ?? [];
+  const slow = useSlowHint(isLoading);
+  const salvarEmpresa = useSalvarEmpresa();
+  const excluirEmpresa = useExcluirEmpresa();
 
   const [cnpj, setCnpj] = useState("");
   const [nome, setNome] = useState("");
@@ -90,41 +92,36 @@ export default function Empresas() {
     return Object.keys(e).length === 0;
   }
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     setErro("");
     if (!validar()) return;
-    try {
-      const payload = {
-        // CNPJ normalizado (so digitos) para a API.
-        cnpj: onlyDigits(cnpj),
-        nome,
-        endereco,
-        gestor_manutencao: gestor,
-        informacoes_adicionais: info,
-      };
-      if (editando) {
-        await api.put(`/empresas/${editando}`, payload);
-        showToast("Empresa atualizada com sucesso", "success");
-      } else {
-        await api.post("/empresas", payload);
-        showToast("Empresa cadastrada com sucesso", "success");
+    const payload = {
+      // CNPJ normalizado (so digitos) para a API.
+      cnpj: onlyDigits(cnpj),
+      nome,
+      endereco,
+      gestor_manutencao: gestor,
+      informacoes_adicionais: info,
+    };
+    salvarEmpresa.mutate(
+      { id: editando, payload },
+      {
+        onSuccess: () => {
+          showToast(editando ? "Empresa atualizada com sucesso" : "Empresa cadastrada com sucesso", "success");
+          cancelarEdicao();
+        },
+        onError: (err) =>
+          setErro(err.message || (editando ? "Erro ao atualizar empresa" : "Erro ao cadastrar empresa")),
       }
-      cancelarEdicao();
-      reload();
-    } catch (err) {
-      setErro(err.message || (editando ? "Erro ao atualizar empresa" : "Erro ao cadastrar empresa"));
-    }
+    );
   }
 
-  async function excluir(id) {
-    try {
-      await api.delete(`/empresas/${id}`);
-      setEmpresas((prev) => prev.filter((e) => e.id !== id));
-      showToast("Empresa excluída com sucesso", "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+  function excluir(id) {
+    excluirEmpresa.mutate(id, {
+      onSuccess: () => showToast("Empresa excluída com sucesso", "success"),
+      onError: (e) => showToast(e.message, "error"),
+    });
   }
 
   const totalPages = Math.max(1, Math.ceil(empresas.length / perPage));
@@ -247,7 +244,7 @@ export default function Empresas() {
       </div>
 
       {/* Aviso de cold start durante carregamento demorado */}
-      {loading && slow && <ColdStartBanner />}
+      {isLoading && slow && <ColdStartBanner />}
 
       {/* Table */}
       <div style={{
@@ -264,11 +261,11 @@ export default function Empresas() {
               </tr>
             </thead>
             <tbody>
-              {error ? (
+              {isError ? (
                 <tr>
-                  <td colSpan="6"><ErrorState message={error} onRetry={reload} /></td>
+                  <td colSpan="6"><ErrorState message={error.message} onRetry={refetch} /></td>
                 </tr>
-              ) : loading ? <SkeletonRows cols={6} /> : paginated.length === 0 ? (
+              ) : isLoading ? <SkeletonRows cols={6} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
@@ -299,7 +296,7 @@ export default function Empresas() {
           </table>
         </div>
 
-        {!loading && !error && empresas.length > 0 && (
+        {!isLoading && !isError && empresas.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}

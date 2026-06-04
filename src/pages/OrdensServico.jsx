@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
-import api from "../services/api";
+import { useState } from "react";
 import { useToast } from "../contexts/ToastContext";
-import { useApiData } from "../hooks/useApiData";
+import { useOrdens, useFinalizarOrdem, useExcluirOrdem } from "../hooks/useOrdens";
+import { useSlowHint } from "../hooks/useSlowHint";
 import Modal from "../components/Modal";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { PriorityBadge, StatusBadge } from "../components/ui/Badge";
@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 
 export default function OrdensServico() {
-  const carregar = useCallback(() => api.get("/ordens-servico").then((r) => r.data), []);
-  const { data, setData: setOrdens, loading, error, slow, reload } = useApiData(carregar);
-  const ordens = data || [];
+  const { data, isLoading, isError, error, refetch } = useOrdens();
+  const ordens = data ?? [];
+  const slow = useSlowHint(isLoading);
+  const finalizarOrdem = useFinalizarOrdem();
+  const excluirOrdem = useExcluirOrdem();
 
   const [selecionada, setSelecionada] = useState(null);
   const [filtroProfissional, setFiltroProfissional] = useState("");
@@ -30,24 +32,18 @@ export default function OrdensServico() {
   const perPage = 10;
   const { showToast } = useToast();
 
-  async function finalizar(id) {
-    try {
-      await api.patch(`/ordens-servico/${id}/finalizar`);
-      reload();
-      showToast("Ordem de serviço finalizada", "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+  function finalizar(id) {
+    finalizarOrdem.mutate(id, {
+      onSuccess: () => showToast("Ordem de serviço finalizada", "success"),
+      onError: (e) => showToast(e.message, "error"),
+    });
   }
 
-  async function excluir(id) {
-    try {
-      await api.delete(`/ordens-servico/${id}`);
-      setOrdens((prev) => prev.filter((o) => o.id !== id));
-      showToast("Ordem de serviço excluída", "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+  function excluir(id) {
+    excluirOrdem.mutate(id, {
+      onSuccess: () => showToast("Ordem de serviço excluída", "success"),
+      onError: (e) => showToast(e.message, "error"),
+    });
   }
 
   const ordensFiltradas = ordens.filter((o) => {
@@ -95,7 +91,7 @@ export default function OrdensServico() {
       </div>
 
       {/* Aviso de cold start durante carregamento demorado */}
-      {loading && slow && <ColdStartBanner />}
+      {isLoading && slow && <ColdStartBanner />}
 
       {/* Table */}
       <div style={{
@@ -112,11 +108,11 @@ export default function OrdensServico() {
               </tr>
             </thead>
             <tbody>
-              {error ? (
+              {isError ? (
                 <tr>
-                  <td colSpan="10"><ErrorState message={error} onRetry={reload} /></td>
+                  <td colSpan="10"><ErrorState message={error.message} onRetry={refetch} /></td>
                 </tr>
-              ) : loading ? <SkeletonRows cols={10} /> : paginated.length === 0 ? (
+              ) : isLoading ? <SkeletonRows cols={10} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="10" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
@@ -152,7 +148,7 @@ export default function OrdensServico() {
           </table>
         </div>
 
-        {!loading && !error && ordensFiltradas.length > 0 && (
+        {!isLoading && !isError && ordensFiltradas.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}

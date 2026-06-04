@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../firebase";
+import { getFirebaseAuth } from "../firebase";
 import { Lightbulb, Mail, Send, MailCheck, ArrowLeft, Loader2 } from "lucide-react";
 
 const dotPattern = `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' opacity='0.03'/%3E%3C/svg%3E")`;
@@ -19,6 +18,8 @@ export default function RecuperarSenha() {
     setLoading(true);
 
     try {
+      const auth = await getFirebaseAuth();
+      const { sendPasswordResetEmail } = await import("firebase/auth");
       await sendPasswordResetEmail(auth, email);
       setMensagem("E-mail enviado! Verifique sua caixa de entrada.");
     } catch (err) {

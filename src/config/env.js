@@ -7,6 +7,9 @@
 
 export const env = {
   apiUrl: import.meta.env.VITE_API_URL,
+  // Opcional: monitoramento de erros (Sentry). Sem DSN, o monitoramento e um
+  // no-op e o SDK nem chega a ser baixado.
+  sentryDsn: import.meta.env.VITE_SENTRY_DSN,
   firebase: {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,

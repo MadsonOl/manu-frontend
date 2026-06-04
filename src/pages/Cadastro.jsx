@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
+import { getFirebaseAuth } from "../firebase";
 import { Lightbulb, Mail, Lock, UserPlus, CheckCircle, X, Loader2 } from "lucide-react";
 
 const dotPattern = `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' opacity='0.03'/%3E%3C/svg%3E")`;
@@ -59,6 +58,8 @@ export default function Cadastro() {
 
     setLoading(true);
     try {
+      const auth = await getFirebaseAuth();
+      const { createUserWithEmailAndPassword } = await import("firebase/auth");
       await createUserWithEmailAndPassword(auth, email, senha);
       navigate("/login");
     } catch (err) {

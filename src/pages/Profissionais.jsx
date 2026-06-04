@@ -1,7 +1,8 @@
-import { useCallback, useState } from "react";
-import api from "../services/api";
+import { useState } from "react";
 import { useToast } from "../contexts/ToastContext";
-import { useApiData } from "../hooks/useApiData";
+import { useProfissionais, useSalvarProfissional, useExcluirProfissional } from "../hooks/useProfissionais";
+import { useFuncoes, useCriarFuncao } from "../hooks/useFuncoes";
+import { useSlowHint } from "../hooks/useSlowHint";
 import Modal from "../components/Modal";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { SkeletonRows, GhostBtn, thStyle, tdStyle } from "../components/ui/TableUtils";
@@ -16,17 +17,15 @@ import { validarCPF, validarTelefone, validarEmail } from "../utils/validators";
 import { Plus, Trash2, Inbox, Pencil, X } from "lucide-react";
 
 export default function Profissionais() {
-  const carregar = useCallback(() => api.get("/profissionais").then((r) => r.data), []);
-  const { data, setData: setProfissionais, loading, error, slow, reload } = useApiData(carregar);
-  const profissionais = data || [];
+  const { data, isLoading, isError, error, refetch } = useProfissionais();
+  const profissionais = data ?? [];
+  const slow = useSlowHint(isLoading);
+  const salvarProfissional = useSalvarProfissional();
+  const excluirProfissional = useExcluirProfissional();
 
-  // Lista secundaria do formulario; falha de carga e silenciosa (select vazio).
-  const carregarFuncoes = useCallback(
-    () => api.get("/funcoes").then((r) => r.data).catch(() => []),
-    []
-  );
-  const { data: funcoesData, reload: reloadFuncoes } = useApiData(carregarFuncoes);
-  const funcoes = funcoesData || [];
+  // Lista secundaria do formulario; falha de carga vira lista vazia (select vazio).
+  const { data: funcoes = [] } = useFuncoes();
+  const criarFuncao = useCriarFuncao();
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -75,55 +74,49 @@ export default function Profissionais() {
     return Object.keys(e).length === 0;
   }
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     setErro("");
     if (!validar()) return;
-    try {
-      // Documentos e telefone seguem normalizados (so digitos) para a API.
-      const payload = {
-        nome,
-        telefone: onlyDigits(telefone),
-        email: email.trim(),
-        rg,
-        cpf: onlyDigits(cpf),
-        funcao,
-      };
-      if (editando) {
-        await api.put(`/profissionais/${editando}`, payload);
-        showToast("Profissional atualizado com sucesso", "success");
-      } else {
-        await api.post("/profissionais", payload);
-        showToast("Profissional cadastrado com sucesso", "success");
+    // Documentos e telefone seguem normalizados (so digitos) para a API.
+    const payload = {
+      nome,
+      telefone: onlyDigits(telefone),
+      email: email.trim(),
+      rg,
+      cpf: onlyDigits(cpf),
+      funcao,
+    };
+    salvarProfissional.mutate(
+      { id: editando, payload },
+      {
+        onSuccess: () => {
+          showToast(editando ? "Profissional atualizado com sucesso" : "Profissional cadastrado com sucesso", "success");
+          cancelarEdicao();
+        },
+        onError: (err) =>
+          setErro(err.message || (editando ? "Erro ao atualizar profissional" : "Erro ao cadastrar profissional")),
       }
-      cancelarEdicao();
-      reload();
-    } catch (err) {
-      setErro(err.message || (editando ? "Erro ao atualizar profissional" : "Erro ao cadastrar profissional"));
-    }
+    );
   }
 
-  async function excluir(id) {
-    try {
-      await api.delete(`/profissionais/${id}`);
-      setProfissionais((prev) => prev.filter((p) => p.id !== id));
-      showToast("Profissional excluído com sucesso", "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+  function excluir(id) {
+    excluirProfissional.mutate(id, {
+      onSuccess: () => showToast("Profissional excluído com sucesso", "success"),
+      onError: (e) => showToast(e.message, "error"),
+    });
   }
 
-  async function salvarFuncao() {
+  function salvarFuncao() {
     if (!novaFuncao.trim()) return;
-    try {
-      await api.post("/funcoes", { nome: novaFuncao });
-      setNovaFuncao("");
-      setModalFuncao(false);
-      reloadFuncoes();
-      showToast("Função cadastrada com sucesso", "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+    criarFuncao.mutate(novaFuncao, {
+      onSuccess: () => {
+        setNovaFuncao("");
+        setModalFuncao(false);
+        showToast("Função cadastrada com sucesso", "success");
+      },
+      onError: (e) => showToast(e.message, "error"),
+    });
   }
 
   const totalPages = Math.max(1, Math.ceil(profissionais.length / perPage));
@@ -226,7 +219,7 @@ export default function Profissionais() {
       </div>
 
       {/* Aviso de cold start durante carregamento demorado */}
-      {loading && slow && <ColdStartBanner />}
+      {isLoading && slow && <ColdStartBanner />}
 
       {/* Table */}
       <div style={{
@@ -243,11 +236,11 @@ export default function Profissionais() {
               </tr>
             </thead>
             <tbody>
-              {error ? (
+              {isError ? (
                 <tr>
-                  <td colSpan="8"><ErrorState message={error} onRetry={reload} /></td>
+                  <td colSpan="8"><ErrorState message={error.message} onRetry={refetch} /></td>
                 </tr>
-              ) : loading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
+              ) : isLoading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="8" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
@@ -280,7 +273,7 @@ export default function Profissionais() {
           </table>
         </div>
 
-        {!loading && !error && profissionais.length > 0 && (
+        {!isLoading && !isError && profissionais.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}

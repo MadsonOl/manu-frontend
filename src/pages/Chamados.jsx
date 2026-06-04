@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
-import { useApiData } from "../hooks/useApiData";
+import { useChamados, useExcluirChamado } from "../hooks/useChamados";
+import { useSlowHint } from "../hooks/useSlowHint";
 import Modal from "../components/Modal";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { PriorityBadge } from "../components/ui/Badge";
@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 
 export default function Chamados() {
-  const carregar = useCallback(() => api.get("/chamados").then((r) => r.data), []);
-  const { data, setData: setChamados, loading, error, slow, reload } = useApiData(carregar);
-  const chamados = data || [];
+  const { data, isLoading, isError, error, refetch } = useChamados();
+  const chamados = data ?? [];
+  const slow = useSlowHint(isLoading);
+  const excluirChamado = useExcluirChamado();
 
   const [selecionado, setSelecionado] = useState(null);
   const [page, setPage] = useState(1);
@@ -31,14 +32,11 @@ export default function Chamados() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  async function excluir(id) {
-    try {
-      await api.delete(`/chamados/${id}`);
-      setChamados((prev) => prev.filter((c) => c.id !== id));
-      showToast("Chamado excluído com sucesso", "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    }
+  function excluir(id) {
+    excluirChamado.mutate(id, {
+      onSuccess: () => showToast("Chamado excluído com sucesso", "success"),
+      onError: (e) => showToast(e.message, "error"),
+    });
   }
 
   function gerarOS(chamado) {
@@ -112,7 +110,7 @@ export default function Chamados() {
       </div>
 
       {/* Aviso de cold start durante carregamento demorado */}
-      {loading && slow && <ColdStartBanner />}
+      {isLoading && slow && <ColdStartBanner />}
 
       {/* Table */}
       <div style={{
@@ -131,11 +129,11 @@ export default function Chamados() {
               </tr>
             </thead>
             <tbody>
-              {error ? (
+              {isError ? (
                 <tr>
-                  <td colSpan="7"><ErrorState message={error} onRetry={reload} /></td>
+                  <td colSpan="7"><ErrorState message={error.message} onRetry={refetch} /></td>
                 </tr>
-              ) : loading ? <SkeletonRows cols={7} /> : paginated.length === 0 ? (
+              ) : isLoading ? <SkeletonRows cols={7} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ padding: 48, textAlign: "center" }}>
                     <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
@@ -172,7 +170,7 @@ export default function Chamados() {
           </table>
         </div>
 
-        {!loading && !error && chamadosFiltrados.length > 0 && (
+        {!isLoading && !isError && chamadosFiltrados.length > 0 && (
           <Pagination
             page={page}
             totalPages={totalPages}
