@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+   Colocacao intencional do hook useAuth com o AuthProvider. O aviso e apenas
+   sobre HMR/fast-refresh em desenvolvimento e nao afeta o build. */
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,

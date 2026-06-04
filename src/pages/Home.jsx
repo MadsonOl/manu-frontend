@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { mensagemDeErro } from "../services/apiErrors";
 import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
 import {
   Lightbulb, Send, CheckCircle, Plus, Loader2,
@@ -23,16 +24,17 @@ export default function Home() {
     setSucesso(false);
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/chamados`, {
-        local,
-        descricao,
-        prioridade,
-        solicitante,
-      });
+      // Timeout amplo: este formulario publico costuma ser o primeiro acesso e
+      // pode pegar o backend "frio" (cold start de ate ~1 min).
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/chamados`,
+        { local, descricao, prioridade, solicitante },
+        { timeout: 75000 }
+      );
       setSucesso(true);
       setLocal(""); setDescricao(""); setPrioridade("NORMAL"); setSolicitante("");
-    } catch {
-      setErro("Erro ao abrir chamado. Tente novamente.");
+    } catch (err) {
+      setErro(mensagemDeErro(err));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export default function Home() {
         background: "var(--surface-1)",
         border: "1px solid var(--border)",
         borderRadius: "var(--radius-xl)",
-        padding: 40,
+        padding: "clamp(24px, 6vw, 40px)",
         maxWidth: 420,
         width: "100%",
         boxShadow: "var(--shadow-lg)",
@@ -85,7 +87,7 @@ export default function Home() {
         {sucesso && (
           <div style={{
             background: "var(--finalizado-bg)",
-            border: "1px solid rgba(52,211,153,0.2)",
+            border: "1px solid color-mix(in srgb, var(--finalizado) 30%, transparent)",
             borderRadius: "var(--radius-md)",
             padding: 14,
             fontSize: "var(--fs-13)",
@@ -103,7 +105,7 @@ export default function Home() {
         {erro && (
           <div style={{
             background: "var(--alta-bg)",
-            border: "1px solid rgba(248,113,113,0.2)",
+            border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
             fontSize: "var(--fs-13)",

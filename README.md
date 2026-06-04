@@ -93,44 +93,31 @@ VITE_API_URL=http://127.0.0.1:8000
 
 ```text
 src/
-├── pages/                  # Páginas da aplicação (uma por rota)
-│   ├── Home.jsx
-│   ├── Login.jsx
-│   ├── Cadastro.jsx
-│   ├── RecuperarSenha.jsx
-│   ├── Sobre.jsx
-│   ├── Dashboard.jsx
-│   ├── Chamados.jsx
-│   ├── OrdensServico.jsx
-│   ├── NovaOrdemServico.jsx
-│   ├── Relatorios.jsx
-│   ├── Empresas.jsx
-│   └── Profissionais.jsx
+├── pages/                  # Páginas da aplicação (carregadas sob demanda)
+│   ├── Home.jsx … Profissionais.jsx
+│   └── NotFound.jsx         # Página 404 (rota catch-all)
 ├── components/             # Componentes reutilizáveis
-│   ├── Header.jsx          # Cabeçalho superior
-│   ├── Sidebar.jsx         # Menu lateral de navegação
-│   ├── Layout.jsx          # Layout principal (Sidebar + conteúdo)
-│   ├── Modal.jsx           # Modal reutilizável
-│   ├── Toast.jsx           # Notificações toast
-│   ├── PrivateRoute.jsx    # Proteção de rotas autenticadas
-│   └── ui/                 # Componentes de UI reutilizáveis
-│       ├── Badge.jsx
-│       ├── Breadcrumb.jsx
-│       ├── ConfirmDialog.jsx
-│       ├── InputStyles.jsx
-│       ├── Pagination.jsx
-│       └── TableUtils.jsx
-├── contexts/
-│   ├── AuthContext.jsx      # Contexto de autenticação (usuário, login, logout)
-│   └── ToastContext.jsx     # Contexto de notificações toast
-├── services/
-│   └── api.js               # Cliente HTTP com Axios e interceptor de token Firebase
-├── test/
-│   ├── setup.js             # Configuração do Vitest
-│   └── PrivateRoute.test.jsx
-├── firebase.js              # Inicialização e configuração do Firebase
-├── main.jsx                 # Ponto de entrada com definição de rotas
-└── index.css                # Estilos globais e variáveis CSS
+│   ├── Header.jsx           # Cabeçalho (com o menu de acessibilidade)
+│   ├── Sidebar.jsx          # Menu lateral / drawer no mobile
+│   ├── Layout.jsx           # Layout privado (Sidebar + conteúdo + skip-link)
+│   ├── Modal.jsx            # Modal acessível (foco preso, Esc, role=dialog)
+│   ├── AccessibilityMenu.jsx# Controles de contraste, escala e daltonismo
+│   ├── ErrorBoundary.jsx    # Fronteira de erro (evita tela em branco)
+│   ├── PageLoader.jsx       # Fallback do code splitting
+│   ├── RouteTitle.jsx       # Título da aba por rota
+│   ├── PrivateRoute.jsx     # Proteção de rotas autenticadas
+│   └── ui/                  # Badge, Breadcrumb, ConfirmDialog, Field,
+│                            # ErrorState, ColdStartBanner, Pagination, etc.
+├── contexts/                # Auth, Toast e Accessibility (provider + hook)
+├── hooks/                   # useApiData, useMediaQuery
+├── utils/                   # masks.js, validators.js (CPF/CNPJ com DV)
+├── services/                # api.js (Axios + interceptor) e apiErrors.js
+├── config/                  # env.js (validação de variáveis de ambiente)
+├── test/                    # Vitest (masks, validators, apiErrors, Field, ...)
+├── App.jsx                  # Árvore da aplicação (providers + rotas)
+├── main.jsx                 # Bootstrap (createRoot)
+├── firebase.js              # Inicialização do Firebase
+└── index.css                # Estilos globais, tokens e temas
 ```
 
 ---
@@ -170,6 +157,32 @@ O sistema utiliza **Firebase Authentication** com e-mail e senha.
 - **Recuperação de senha** — via `sendPasswordResetEmail`
 - **Proteção de rotas** — o componente `PrivateRoute` verifica o estado de autenticação e redireciona para `/login` se o usuário não estiver logado
 - **Token nas requisições** — o interceptor do Axios injeta automaticamente o token Firebase (`Bearer`) em todas as chamadas à API
+
+---
+
+## Acessibilidade e Qualidade
+
+O frontend segue **WCAG 2.1 AA** e inclui um menu de preferências (no cabeçalho,
+disponível em todas as telas):
+
+- **Alto contraste** (≥ 7:1), **escala de fonte** (100/125/150/200%) e
+  **paletas para daltonismo** (protanopia, deuteranopia, tritanopia,
+  acromatopsia), persistidos em `localStorage`.
+- Indicador de **foco visível**, **skip-link**, **títulos por rota**, suporte a
+  **`prefers-reduced-motion`**, nomes acessíveis e alvos de toque ≥ 44px.
+- **Tabelas responsivas** (viram cartões no mobile) e **formulários** com label
+  associada, indicação de obrigatório e validação de CPF/CNPJ (dígito
+  verificador), telefone e e-mail.
+
+Robustez e operação:
+
+- **ErrorBoundary** global e **página 404** evitam telas em branco.
+- **Validação de variáveis de ambiente** no boot (`src/config/env.js`).
+- **Tratamento de erros** centralizado com mensagens claras (cold start,
+  offline, sessão expirada, etc.) e **timeout** de 75 s.
+- **Code splitting por rota** reduz o JavaScript de carregamento inicial.
+- **Testes** com Vitest (`npm run test`). Detalhes do ciclo de evolução em
+  [`docs/RELATORIO-TRANSFORMACAO-DIGITAL.md`](docs/RELATORIO-TRANSFORMACAO-DIGITAL.md).
 
 ---
 

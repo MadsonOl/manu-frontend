@@ -37,25 +37,33 @@ export default function Header({ variant = "public" }) {
   }
 
   async function handleLogout() {
-    await logout();
+    // Mesmo se o signOut falhar, fechamos o dialogo e seguimos para a home.
+    try {
+      await logout();
+    } catch {
+      /* ignora: o fluxo segue para a home de qualquer forma */
+    }
     setShowLogout(false);
     navigate("/");
   }
 
   return (
     <>
-      <header style={{
-        height: 56,
-        background: "var(--surface-1)",
-        borderBottom: "1px solid var(--border)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 20px",
-        position: "sticky",
-        top: 0,
-        zIndex: 90,
-      }}>
+      <header
+        className={isPrivate ? "app-header app-header--privada" : "app-header"}
+        style={{
+          height: 56,
+          background: "var(--surface-1)",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 20px",
+          position: "sticky",
+          top: 0,
+          zIndex: 90,
+        }}
+      >
         {/* Left — back button */}
         <button
           onClick={handleBack}
@@ -80,9 +88,9 @@ export default function Header({ variant = "public" }) {
           Voltar
         </button>
 
-        {/* Center — page title (only on private pages) */}
+        {/* Center — page title (only on private pages; oculto no mobile) */}
         {isPrivate && title && (
-          <span style={{
+          <span className="app-header__titulo" style={{
             fontSize: "var(--fs-15)",
             fontWeight: 600,
             color: "var(--text-1)",

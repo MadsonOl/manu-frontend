@@ -226,6 +226,44 @@ body {
   outline: none;
 }
 
+/*
+ * Skip-link "Pular para o conteudo" (WCAG 2.4.1). Fica fora da tela ate receber
+ * foco por teclado, quando aparece no topo. Permite ao usuario de teclado pular
+ * a navegacao repetida e ir direto ao conteudo principal.
+ */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 1000;
+  background: var(--primary-strong);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-13);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/*
+ * Respeita a preferencia de menos movimento do sistema (WCAG 2.3.3): neutraliza
+ * animacoes e transicoes para quem ativou "reduzir movimento".
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
@@ -333,6 +371,21 @@ body {
   .reflow-table tbody td:not([data-label]) {
     justify-content: center;
     text-align: center;
+  }
+}
+
+/*
+ * Cabecalho no mobile: no app privado, o botao-menu (hamburguer) fica fixo no
+ * canto superior esquerdo. Damos folga a esquerda do cabecalho para o conteudo
+ * (botao Voltar) nao ficar embaixo dele, e ocultamos o titulo centralizado, que
+ * em telas estreitas colidiria com os controles a direita.
+ */
+@media (max-width: 768px) {
+  .app-header--privada {
+    padding-left: 68px !important;
+  }
+  .app-header__titulo {
+    display: none !important;
   }
 }
 

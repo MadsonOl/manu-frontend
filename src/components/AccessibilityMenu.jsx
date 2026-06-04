@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Accessibility, Contrast, Check } from "lucide-react";
 import { useAccessibility, FONT_SCALES, CB_MODES } from "../contexts/AccessibilityContext";
+import { PriorityBadge, StatusBadge } from "./ui/Badge";
 
 /*
  * Controle de acessibilidade exibido no cabecalho (local visivel e presente em
@@ -193,6 +194,20 @@ export default function AccessibilityMenu() {
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
+
+            {/*
+              Previa ao vivo das cores de prioridade/status. Como os badges usam
+              os mesmos tokens que a paleta sobrescreve, eles mudam de cor na
+              hora ao trocar o tipo de daltonismo - prova visual imediata,
+              independente da tela em que o usuario esteja.
+            */}
+            <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <PriorityBadge value="ALTA" />
+              <PriorityBadge value="NORMAL" />
+              <PriorityBadge value="BAIXA" />
+              <StatusBadge value="ATENDIMENTO" />
+              <StatusBadge value="FINALIZADO" />
+            </div>
           </div>
         </div>
       )}

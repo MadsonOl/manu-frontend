@@ -8,6 +8,9 @@ export default function Layout({ children }) {
 
   return (
     <div>
+      {/* Primeiro elemento focavel: pula a navegacao e vai ao conteudo. */}
+      <a href="#conteudo-principal" className="skip-link">Pular para o conteudo</a>
+
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Mobile hamburger */}
@@ -45,7 +48,7 @@ export default function Layout({ children }) {
         flexDirection: "column",
       }}>
         <Header variant="private" />
-        <main style={{ flex: 1, padding: 32 }}>
+        <main id="conteudo-principal" tabIndex={-1} style={{ flex: 1, padding: 32 }}>
           {children}
         </main>
       </div>

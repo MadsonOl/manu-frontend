@@ -46,7 +46,7 @@ export default function RecuperarSenha() {
         background: "var(--surface-1)",
         border: "1px solid var(--border)",
         borderRadius: "var(--radius-xl)",
-        padding: 40,
+        padding: "clamp(24px, 6vw, 40px)",
         maxWidth: 420,
         width: "100%",
         boxShadow: "var(--shadow-lg)",
@@ -67,7 +67,7 @@ export default function RecuperarSenha() {
         {erro && (
           <div style={{
             background: "var(--alta-bg)",
-            border: "1px solid rgba(248,113,113,0.2)",
+            border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
             fontSize: "var(--fs-13)",
@@ -81,7 +81,7 @@ export default function RecuperarSenha() {
         {mensagem && (
           <div style={{
             background: "var(--finalizado-bg)",
-            border: "1px solid rgba(52,211,153,0.2)",
+            border: "1px solid color-mix(in srgb, var(--finalizado) 30%, transparent)",
             borderRadius: "var(--radius-md)",
             padding: "14px",
             fontSize: "var(--fs-13)",

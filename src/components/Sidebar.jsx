@@ -41,7 +41,13 @@ export default function Sidebar({ isOpen, onClose }) {
   }, [isMobile, isOpen, onClose]);
 
   async function handleLogout() {
-    await logout();
+    // Mesmo se o signOut falhar, encerramos a sessao local e seguimos para a
+    // home - o usuario nunca fica preso por um erro de logout.
+    try {
+      await logout();
+    } catch {
+      /* ignora: navegacao abaixo encerra o fluxo de qualquer forma */
+    }
     navigate("/");
   }
 

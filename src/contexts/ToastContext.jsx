@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+   Colocacao intencional do hook useToast com o ToastProvider e os componentes
+   de toast. O aviso e apenas sobre HMR/fast-refresh e nao afeta o build. */
 import { createContext, useContext, useState, useCallback } from "react";
 
 const ToastContext = createContext();

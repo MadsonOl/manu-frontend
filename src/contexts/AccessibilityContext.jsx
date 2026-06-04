@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+   Colocacao intencional do hook useAccessibility e das constantes (FONT_SCALES,
+   CB_MODES) com o provider. O aviso e apenas sobre HMR/fast-refresh. */
 import { createContext, useContext, useEffect, useState } from "react";
 
 /*

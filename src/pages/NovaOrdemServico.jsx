@@ -79,7 +79,7 @@ export default function NovaOrdemServico() {
         {erro && (
           <div style={{
             background: "var(--alta-bg)",
-            border: "1px solid rgba(248,113,113,0.2)",
+            border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
             fontSize: "var(--fs-13)",

@@ -1,3 +1,7 @@
+/* eslint-disable react-refresh/only-export-components --
+   Constantes de estilo (thStyle/tdStyle) convivem com componentes utilitarios
+   de tabela neste modulo de proposito. O aviso e apenas sobre HMR/fast-refresh
+   em desenvolvimento e nao afeta o build de producao. */
 export const thStyle = {
   fontSize: "var(--fs-11)",
   fontWeight: 600,
