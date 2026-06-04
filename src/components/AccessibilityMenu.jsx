@@ -86,7 +86,11 @@ export default function AccessibilityMenu() {
             top: "calc(100% + 8px)",
             right: 0,
             zIndex: 200,
-            width: 248,
+            // Largura em rem (e nao px) para acompanhar a escala de fonte do <html>
+            // e evitar overflow do texto em 150/200%; maxWidth impede que o painel
+            // ultrapasse a viewport no mobile, deixando o conteudo quebrar linha.
+            width: "15.5rem",
+            maxWidth: "calc(100vw - 24px)",
             background: "var(--surface-1)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)",
