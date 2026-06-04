@@ -14,6 +14,15 @@ export function useOrdens() {
   });
 }
 
+/** Cria uma OS e revalida a lista (cache compartilhado com Ordens/Relatorios/Dashboard). */
+export function useCriarOrdem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => api.post("/ordens-servico", payload).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: CHAVE_ORDENS }),
+  });
+}
+
 /** Finaliza uma OS (status -> FINALIZADO) e revalida a lista. */
 export function useFinalizarOrdem() {
   const qc = useQueryClient();

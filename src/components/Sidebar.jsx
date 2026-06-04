@@ -23,20 +23,43 @@ export default function Sidebar({ isOpen, onClose }) {
   const [showLogout, setShowLogout] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const navRef = useRef(null);
+  const asideRef = useRef(null);
 
-  // No mobile, o drawer aberto: trava a rolagem do fundo, fecha com Esc e
-  // recebe o foco no primeiro item.
+  // No mobile o drawer e um dialogo modal: trava a rolagem do fundo, fecha com
+  // Esc, recebe o foco, prende o Tab dentro dele (focus trap) e devolve o foco
+  // ao gatilho (hamburguer) ao fechar - assim o teclado nao escapa para o
+  // conteudo coberto pelo overlay.
   useEffect(() => {
     if (!isMobile || !isOpen) return;
+    const gatilho = document.activeElement;
     document.body.style.overflow = "hidden";
-    navRef.current?.querySelector("a")?.focus();
+    asideRef.current?.querySelector("a, button")?.focus();
+
     function onKeyDown(e) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focaveis = asideRef.current?.querySelectorAll(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focaveis || focaveis.length === 0) return;
+      const primeiro = focaveis[0];
+      const ultimo = focaveis[focaveis.length - 1];
+      if (e.shiftKey && document.activeElement === primeiro) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primeiro.focus();
+      }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
+      if (gatilho instanceof HTMLElement) gatilho.focus();
     };
   }, [isMobile, isOpen, onClose]);
 
@@ -89,9 +112,13 @@ export default function Sidebar({ isOpen, onClose }) {
         tela. No desktop ela esta sempre visivel, entao nunca e inerte.
       */}
       <aside
+        ref={asideRef}
         style={sidebarStyle}
         className={`sidebar ${isOpen ? "sidebar-open" : ""}`}
         inert={isMobile && !isOpen ? true : undefined}
+        role={isMobile ? "dialog" : undefined}
+        aria-modal={isMobile && isOpen ? "true" : undefined}
+        aria-label={isMobile ? "Menu de navegacao" : undefined}
       >
         {/* Logo */}
         <div style={{

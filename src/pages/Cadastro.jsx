@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getFirebaseAuth } from "../firebase";
+import { useToast } from "../contexts/ToastContext";
 import { Lightbulb, Mail, Lock, UserPlus, CheckCircle, X, Loader2 } from "lucide-react";
 
 const dotPattern = `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='white' opacity='0.03'/%3E%3C/svg%3E")`;
@@ -42,6 +43,7 @@ export default function Cadastro() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const strength = getPasswordStrength(senha);
   const senhasMatch = confirmar.length > 0 && senha === confirmar;
@@ -61,6 +63,8 @@ export default function Cadastro() {
       const auth = await getFirebaseAuth();
       const { createUserWithEmailAndPassword } = await import("firebase/auth");
       await createUserWithEmailAndPassword(auth, email, senha);
+      // Confirma o sucesso antes de levar ao login (antes a tela trocava sem feedback).
+      showToast("Conta criada com sucesso! Faça login para continuar.", "success");
       navigate("/login");
     } catch (err) {
       if (err.code === "auth/email-already-in-use") {
@@ -117,7 +121,7 @@ export default function Cadastro() {
         </p>
 
         {erro && (
-          <div style={{
+          <div role="alert" style={{
             background: "var(--alta-bg)",
             border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
@@ -217,6 +221,7 @@ export default function Cadastro() {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             style={{
               width: "100%",
               background: "var(--primary-strong)",
@@ -235,8 +240,8 @@ export default function Cadastro() {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <UserPlus size={15} />}
-            Criar conta
+            {loading ? <Loader2 size={15} aria-hidden="true" style={{ animation: "spin 1s linear infinite" }} /> : <UserPlus size={15} aria-hidden="true" />}
+            {loading ? "Criando conta..." : "Criar conta"}
           </button>
         </form>
 

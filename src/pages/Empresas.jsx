@@ -146,7 +146,7 @@ export default function Empresas() {
         borderRadius: "var(--radius-lg)", padding: 24, marginBottom: 24,
       }}>
         {erro && (
-          <div style={{
+          <div role="alert" style={{
             background: "var(--alta-bg)", border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)", padding: "10px 14px",
             fontSize: "var(--fs-13)", color: "var(--alta)", marginBottom: 16,
@@ -215,17 +215,21 @@ export default function Empresas() {
             <Field id="empresa-info" label="Informações Adicionais" type="textarea" value={info} onChange={setInfo} />
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 16, alignItems: "center" }}>
-            <button type="submit" style={{
+            <button type="submit" disabled={salvarEmpresa.isPending} aria-busy={salvarEmpresa.isPending} style={{
               background: "var(--primary-strong)", color: "#fff",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: "var(--fs-13)", fontWeight: 500, border: "none", cursor: "pointer",
+              fontSize: "var(--fs-13)", fontWeight: 500, border: "none",
+              cursor: salvarEmpresa.isPending ? "not-allowed" : "pointer",
+              opacity: salvarEmpresa.isPending ? 0.7 : 1,
               transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
             }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
+              onMouseEnter={(e) => { if (!salvarEmpresa.isPending) e.currentTarget.style.background = "var(--primary-dark)"; }}
               onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
-              {editando ? <Pencil size={15} /> : <Plus size={15} />}
-              {editando ? "Salvar alterações" : "Cadastrar"}
+              {salvarEmpresa.isPending
+                ? <Loader2 size={15} aria-hidden="true" style={{ animation: "spin 1s linear infinite" }} />
+                : (editando ? <Pencil size={15} aria-hidden="true" /> : <Plus size={15} aria-hidden="true" />)}
+              {salvarEmpresa.isPending ? "Salvando..." : (editando ? "Salvar alterações" : "Cadastrar")}
             </button>
             {editando && (
               <button type="button" onClick={cancelarEdicao} style={{

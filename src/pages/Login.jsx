@@ -67,7 +67,7 @@ export default function Login() {
         </p>
 
         {erro && (
-          <div style={{
+          <div role="alert" style={{
             background: "var(--alta-bg)",
             border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
@@ -162,6 +162,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             style={{
               width: "100%",
               background: "var(--primary-strong)",
@@ -180,8 +181,8 @@ export default function Login() {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <LogIn size={15} />}
-            Entrar
+            {loading ? <Loader2 size={15} aria-hidden="true" style={{ animation: "spin 1s linear infinite" }} /> : <LogIn size={15} aria-hidden="true" />}
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 

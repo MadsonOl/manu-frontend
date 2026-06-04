@@ -66,7 +66,7 @@ export default function RecuperarSenha() {
         </p>
 
         {erro && (
-          <div style={{
+          <div role="alert" style={{
             background: "var(--alta-bg)",
             border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
@@ -80,7 +80,7 @@ export default function RecuperarSenha() {
         )}
 
         {mensagem && (
-          <div style={{
+          <div role="status" style={{
             background: "var(--finalizado-bg)",
             border: "1px solid color-mix(in srgb, var(--finalizado) 30%, transparent)",
             borderRadius: "var(--radius-md)",
@@ -92,7 +92,7 @@ export default function RecuperarSenha() {
             alignItems: "center",
             gap: 10,
           }}>
-            <MailCheck size={18} />
+            <MailCheck size={18} aria-hidden="true" />
             {mensagem}
           </div>
         )}
@@ -136,6 +136,7 @@ export default function RecuperarSenha() {
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             style={{
               width: "100%",
               background: "var(--primary-strong)",
@@ -154,8 +155,8 @@ export default function RecuperarSenha() {
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} />}
-            Enviar instruções
+            {loading ? <Loader2 size={15} aria-hidden="true" style={{ animation: "spin 1s linear infinite" }} /> : <Send size={15} aria-hidden="true" />}
+            {loading ? "Enviando..." : "Enviar instruções"}
           </button>
         </form>
 

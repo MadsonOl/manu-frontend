@@ -58,6 +58,15 @@ export default function OrdensServico() {
 
   const totalPages = Math.max(1, Math.ceil(ordensFiltradas.length / perPage));
   const paginated = ordensFiltradas.slice((page - 1) * perPage, page * perPage);
+  // Distingue lista vazia de "filtro sem resultado" para nao dar a impressao de
+  // que nao ha dados quando, na verdade, basta limpar o filtro.
+  const semResultadoPorFiltro = ordens.length > 0 && ordensFiltradas.length === 0;
+  function limparFiltros() {
+    setFiltroProfissional("");
+    setFiltroStatus("");
+    setFiltroData("");
+    setPage(1);
+  }
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>
@@ -115,9 +124,22 @@ export default function OrdensServico() {
               ) : isLoading ? <SkeletonRows cols={10} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="10" style={{ padding: 48, textAlign: "center" }}>
-                    <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhum registro encontrado</div>
-                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>As ordens de serviço aparecerão aqui</div>
+                    <Inbox size={32} aria-hidden="true" style={{ color: "var(--text-3)", marginBottom: 12 }} />
+                    {semResultadoPorFiltro ? (
+                      <>
+                        <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhum resultado para os filtros aplicados</div>
+                        <button onClick={limparFiltros} style={{
+                          marginTop: 10, background: "none", border: "none",
+                          color: "var(--primary)", cursor: "pointer", textDecoration: "underline",
+                          fontSize: "var(--fs-13)",
+                        }}>Limpar filtros</button>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhum registro encontrado</div>
+                        <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>As ordens de serviço aparecerão aqui</div>
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : paginated.map((o, i) => (
@@ -229,6 +251,7 @@ export default function OrdensServico() {
         title="Finalizar ordem de serviço"
         message="Deseja finalizar esta ordem de serviço? Esta ação não pode ser desfeita."
         confirmLabel="Finalizar"
+        tone="warning"
       />
     </div>
   );

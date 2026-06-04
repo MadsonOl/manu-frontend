@@ -59,6 +59,14 @@ export default function Chamados() {
 
   const totalPages = Math.max(1, Math.ceil(chamadosFiltrados.length / perPage));
   const paginated = chamadosFiltrados.slice((page - 1) * perPage, page * perPage);
+  // Distingue "nenhum chamado" de "busca/filtro sem resultado".
+  const semResultadoPorFiltro = chamados.length > 0 && chamadosFiltrados.length === 0;
+  function limparFiltros() {
+    setBusca("");
+    setFiltroPrioridade("");
+    setFiltroData("");
+    setPage(1);
+  }
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>
@@ -136,13 +144,28 @@ export default function Chamados() {
               ) : isLoading ? <SkeletonRows cols={7} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ padding: 48, textAlign: "center" }}>
-                    <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>
-                      Nenhum registro encontrado
-                    </div>
-                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>
-                      Os chamados aparecerão aqui quando forem abertos
-                    </div>
+                    <Inbox size={32} aria-hidden="true" style={{ color: "var(--text-3)", marginBottom: 12 }} />
+                    {semResultadoPorFiltro ? (
+                      <>
+                        <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>
+                          Nenhum resultado para os filtros aplicados
+                        </div>
+                        <button onClick={limparFiltros} style={{
+                          marginTop: 10, background: "none", border: "none",
+                          color: "var(--primary)", cursor: "pointer", textDecoration: "underline",
+                          fontSize: "var(--fs-13)",
+                        }}>Limpar filtros</button>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>
+                          Nenhum registro encontrado
+                        </div>
+                        <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>
+                          Os chamados aparecerão aqui quando forem abertos
+                        </div>
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : paginated.map((c, i) => (

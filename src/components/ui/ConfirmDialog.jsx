@@ -8,7 +8,16 @@ export default function ConfirmDialog({
   title = "Confirmar exclusão",
   message = "Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.",
   confirmLabel = "Excluir",
+  tone = "danger",
 }) {
+  // Tom da acao: 'danger' (destrutiva, vermelho) ou 'warning' (nao destrutiva,
+  // ex.: finalizar). Antes o icone era sempre neutro e o botao sempre vermelho,
+  // passando sensacao de risco indevida em acoes nao destrutivas.
+  const cores = {
+    danger: { icone: "var(--alta)", botao: "var(--danger-strong)" },
+    warning: { icone: "var(--normal)", botao: "var(--primary-strong)" },
+  };
+  const tom = cores[tone] || cores.danger;
   return (
     <Modal
       isOpen={isOpen}
@@ -35,7 +44,7 @@ export default function ConfirmDialog({
           <button
             onClick={() => { onConfirm(); onClose(); }}
             style={{
-              background: "var(--danger-strong)",
+              background: tom.botao,
               color: "#fff",
               border: "none",
               padding: "8px 16px",
@@ -57,7 +66,7 @@ export default function ConfirmDialog({
       }
     >
       <div style={{ textAlign: "center" }}>
-        <AlertTriangle size={32} style={{ color: "var(--normal)", marginBottom: 16 }} />
+        <AlertTriangle size={32} aria-hidden="true" style={{ color: tom.icone, marginBottom: 16 }} />
         <p style={{ fontSize: "var(--fs-14)", color: "var(--text-2)", lineHeight: 1.6 }}>
           {message}
         </p>

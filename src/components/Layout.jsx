@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Menu } from "lucide-react";
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Referencia estavel: evita que o focus trap do drawer re-dispare a cada render.
+  const fecharSidebar = useCallback(() => setSidebarOpen(false), []);
 
   return (
     <div>
       {/* Primeiro elemento focavel: pula a navegacao e vai ao conteudo. */}
       <a href="#conteudo-principal" className="skip-link">Pular para o conteudo</a>
 
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={sidebarOpen} onClose={fecharSidebar} />
 
       {/* Mobile hamburger */}
       <button

@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import api from "../services/api";
 import { useToast } from "../contexts/ToastContext";
+import { useProfissionais } from "../hooks/useProfissionais";
+import { useEmpresas } from "../hooks/useEmpresas";
+import { useCriarOrdem } from "../hooks/useOrdens";
 import Breadcrumb from "../components/ui/Breadcrumb";
 import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/ui/InputStyles";
 import { Save, ArrowLeft, Loader2 } from "lucide-react";
@@ -17,27 +19,22 @@ export default function NovaOrdemServico() {
   const [prioridade, setPrioridade] = useState(chamado.prioridade || "NORMAL");
   const [solicitante, setSolicitante] = useState(chamado.solicitante || "");
   const [responsavel, setResponsavel] = useState("");
-  const [profissionais, setProfissionais] = useState([]);
-  const [empresas, setEmpresas] = useState([]);
   const [empresaId, setEmpresaId] = useState(chamado.empresa_id || "");
   const [erro, setErro] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    api.get("/profissionais")
-      .then((res) => setProfissionais(res.data))
-      .catch(() => {});
-    api.get("/empresas")
-      .then((res) => setEmpresas(res.data))
-      .catch(() => {});
-  }, []);
+  // Listas via React Query: reaproveitam o cache compartilhado e expoem
+  // carregando/erro, em vez do api.get com catch silencioso de antes — que
+  // deixava o select vazio sem explicar o motivo e travava o formulario.
+  const { data: profissionais = [], isLoading: carregandoProf, isError: erroProf, refetch: refetchProf } = useProfissionais();
+  const { data: empresas = [], isLoading: carregandoEmp, isError: erroEmp, refetch: refetchEmp } = useEmpresas();
+  const criarOrdem = useCriarOrdem();
+  const enviando = criarOrdem.isPending;
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     setErro("");
-    setLoading(true);
-    try {
-      await api.post("/ordens-servico", {
+    criarOrdem.mutate(
+      {
         local,
         descricao,
         prioridade,
@@ -45,15 +42,17 @@ export default function NovaOrdemServico() {
         profissional: responsavel,
         chamado_id: chamado.id || null,
         empresa_id: empresaId || null,
-      });
-      showToast("Ordem de serviço criada com sucesso", "success");
-      navigate("/ordens-servico");
-    } catch {
-      setErro("Erro ao cadastrar ordem de serviço");
-      showToast("Erro ao cadastrar OS", "error");
-    } finally {
-      setLoading(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          showToast("Ordem de serviço criada com sucesso", "success");
+          navigate("/ordens-servico");
+        },
+        // Mensagem especifica do interceptor (cold start, sessao expirada, etc.)
+        // num unico canal (banner), em vez de um texto fixo generico duplicado.
+        onError: (err) => setErro(err.message || "Erro ao cadastrar ordem de serviço"),
+      }
+    );
   }
 
   return (
@@ -77,7 +76,7 @@ export default function NovaOrdemServico() {
         maxWidth: 560,
       }}>
         {erro && (
-          <div style={{
+          <div role="alert" style={{
             background: "var(--alta-bg)",
             border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)",
@@ -116,40 +115,42 @@ export default function NovaOrdemServico() {
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>Empresa</label>
-            <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}
+            <select value={empresaId} onChange={(e) => setEmpresaId(e.target.value)} disabled={carregandoEmp}
               style={inputStyle} onFocus={handleFocus} onBlur={handleBlur}>
-              <option value="">Selecione uma empresa</option>
+              <option value="">{carregandoEmp ? "Carregando empresas..." : "Selecione uma empresa"}</option>
               {empresas.map((emp) => (
                 <option key={emp.id} value={emp.id}>{emp.nome}</option>
               ))}
             </select>
+            {erroEmp && <ErroCarregamento texto="Não foi possível carregar as empresas." onRetry={refetchEmp} />}
           </div>
           <div style={{ marginBottom: 24 }}>
             <label style={labelStyle}>Responsável</label>
-            <select value={responsavel} onChange={(e) => setResponsavel(e.target.value)} required
+            <select value={responsavel} onChange={(e) => setResponsavel(e.target.value)} required disabled={carregandoProf}
               style={inputStyle} onFocus={handleFocus} onBlur={handleBlur}>
-              <option value="">Selecione um profissional</option>
+              <option value="">{carregandoProf ? "Carregando profissionais..." : "Selecione um profissional"}</option>
               {profissionais.map((p) => (
                 <option key={p.id} value={p.nome}>{p.nome}</option>
               ))}
             </select>
+            {erroProf && <ErroCarregamento texto="Não foi possível carregar os profissionais." onRetry={refetchProf} />}
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button type="submit" disabled={loading} style={{
+            <button type="submit" disabled={enviando} aria-busy={enviando} style={{
               background: "var(--primary-strong)", color: "#fff",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
               fontSize: "var(--fs-13)", fontWeight: 500, border: "none",
-              cursor: loading ? "not-allowed" : "pointer",
+              cursor: enviando ? "not-allowed" : "pointer",
               transition: "var(--transition)",
               display: "flex", alignItems: "center", gap: 6,
-              opacity: loading ? 0.7 : 1,
+              opacity: enviando ? 0.7 : 1,
             }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--primary-dark)"; }}
+              onMouseEnter={(e) => { if (!enviando) e.currentTarget.style.background = "var(--primary-dark)"; }}
               onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
-              {loading ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={15} />}
-              Cadastrar OS
+              {enviando ? <Loader2 size={15} aria-hidden="true" style={{ animation: "spin 1s linear infinite" }} /> : <Save size={15} aria-hidden="true" />}
+              {enviando ? "Cadastrando..." : "Cadastrar OS"}
             </button>
             <button type="button" onClick={() => navigate(-1)} style={{
               background: "var(--surface-3)", color: "var(--text-1)",
@@ -159,12 +160,30 @@ export default function NovaOrdemServico() {
               transition: "var(--transition)",
               display: "flex", alignItems: "center", gap: 6,
             }}>
-              <ArrowLeft size={15} />
+              <ArrowLeft size={15} aria-hidden="true" />
               Voltar
             </button>
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+// Mensagem de falha de carregamento de uma lista, com acao de tentar novamente.
+function ErroCarregamento({ texto, onRetry }) {
+  return (
+    <div role="alert" style={{
+      marginTop: 6, fontSize: "var(--fs-12)", color: "var(--alta)",
+      display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+    }}>
+      {texto}
+      <button type="button" onClick={() => onRetry()} style={{
+        background: "none", border: "none", color: "var(--primary)",
+        cursor: "pointer", textDecoration: "underline", fontSize: "var(--fs-12)", padding: 0,
+      }}>
+        Tentar novamente
+      </button>
     </div>
   );
 }

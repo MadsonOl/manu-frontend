@@ -21,7 +21,8 @@ Pilha: React 19, Vite 8, React Router 7, Firebase Auth, Axios, Vitest.
 | Modo de alto contraste | inexistente | ≥ 7:1 (WCAG 1.4.6) |
 | Paletas para daltonismo | inexistente | 4 tipos, validadas por simulação |
 | Bundle JS de carregamento inicial | ~495 KB (1 arquivo) | entry 214 KB + chunks sob demanda |
-| Testes automatizados | 1 (frontend) | 42 (frontend, inclui a11y/axe) + 33 (backend, cobertura 48%) |
+| Leituras no Firestore ao listar ordens | 1 + N (uma consulta de empresa por OS) | 1 + 1 leitura em lote (`get_all`) |
+| Testes automatizados | 1 (frontend) | 55 (frontend, inclui a11y/axe) + 47 (backend, cobertura ~67%) |
 | CI valida Pull Requests | não (só push na main) | sim, nos dois repositórios |
 | Lint (ESLint) | 0 erros / 11 warnings | 0 erros / 0 warnings |
 | Validação server-side (CPF/CNPJ/e-mail) | inexistente | validação com dígito verificador nos schemas |
@@ -119,6 +120,8 @@ Critérios de alerta sugeridos: KPI 3 > 5% por 15 min; KPI 6 LCP p75 > 2,5 s.
 | Formulários | 1.3.1 / 3.3.2 | sem label/obrigatório → `Field` com `htmlFor/id`, `aria-required`, erro `role=alert` |
 | Modal | 2.1.2 / 4.1.2 | div genérica → `role=dialog`, foco preso, Esc, foco devolvido |
 | Skip-link + título por rota | 2.4.1 / 2.4.2 | inexistentes → implementados |
+| Mensagens de status/erro | 4.1.3 | banners de submit mudos → `role="alert"`/`role="status"` (login, cadastro, OS, recuperar senha) |
+| Menu lateral no mobile (drawer) | 2.1.2 / 4.1.2 | sem foco preso → focus trap, `role="dialog"` e foco devolvido ao gatilho |
 
 Como reproduzir as métricas de contraste: os valores foram calculados pela
 fórmula de luminância relativa do WCAG; as paletas de daltonismo foram
@@ -144,12 +147,23 @@ confirmando a separação perceptual entre os níveis de status/prioridade.
    dígito verificador, telefone, e-mail e campos obrigatórios, aplicada aos
    schemas de entrada (`Create`) sem afetar a leitura de dados legados. Cobre o
    risco de confiar apenas no cliente; coberto por 13 testes de schema.
+6. **`CrudRepository` (backend)** — extração de um repositório CRUD genérico
+   (criar/listar/obter/atualizar/excluir) sobre o Firestore, eliminando a
+   duplicação do mesmo padrão em cinco *routers* (chamados, ordens, empresas,
+   profissionais e funções). Rotas, status e formato de resposta preservados.
+7. **Consistência do contrato do PUT de ordens (backend)** — o
+   `PUT /ordens-servico/{id}` passou a resolver e devolver o objeto `empresa`
+   como o GET e o POST, em vez de `empresa: null`.
+8. **Robustez do relatório (backend)** — datas inválidas vindas do cliente
+   passaram a retornar 422 (antes 500); registros legados com data ausente são
+   ignorados sem derrubar o relatório; e o relatório passou a resolver a empresa
+   em lote (antes retornava sempre `null`).
 
 ### 2.3 Otimizações de performance (≥ 2) — **[print] bundle antes × depois**
 
 1. **Code splitting por rota** (`React.lazy` + `Suspense`): bundle único de
    **~495 KB / ~145 KB gzip** → cada página 1–10 KB carregada sob demanda.
-2. **Firebase carregado sob demanda** (dynamic import): o SDK (~125 KB) saiu do
+2. **Firebase carregado sob demanda** (dynamic import): o SDK (~113 KB) saiu do
    caminho crítico de renderização. Caminho crítico inicial caiu para
    **~74 KB gzip** (entry), com Firebase, Axios e ícones em chunks próprios.
 3. **Cache de dados com React Query**: deduplicação e revalidação evitam
@@ -157,6 +171,11 @@ confirmando a separação perceptual entre os níveis de status/prioridade.
    reutilizam o cache e navegam instantaneamente.
 4. **Timeout + feedback de cold start**: `timeout` de 75 s + `ColdStartBanner` e
    retry, evitando requisições penduradas e dando visibilidade do status.
+5. **Eliminação de N+1 na listagem de ordens (backend)**: a listagem fazia uma
+   leitura de empresa por ordem; passou a carregar todas as empresas
+   referenciadas em uma única leitura em lote (`db.get_all`), resolvendo o
+   vínculo em memória. Em uma página com N ordens, as leituras caem de 1 + N
+   para 1 + 1.
 
 ### 2.4 Melhorias de usabilidade (≥ 2)
 
@@ -164,6 +183,11 @@ confirmando a separação perceptual entre os níveis de status/prioridade.
    recuperação de erros).
 2. Confirmação em ações destrutivas/irreversíveis (excluir e finalizar OS) e
    máscaras em tempo real nos documentos.
+3. Botão de salvar desabilitado durante o envio (com indicador) nos formulários,
+   evitando cadastros duplicados quando o backend está frio.
+4. Estado vazio distingue "nenhum dado" de "filtro/busca sem resultado" (com ação
+   "Limpar filtros"); o diálogo de confirmação diferencia exclusão de finalização
+   pela cor/ícone; o cadastro de conta passou a dar feedback de sucesso.
 
 ### 2.5 Pipeline de CI/CD, deploy e monitoramento
 
@@ -173,9 +197,12 @@ confirmando a separação perceptual entre os níveis de status/prioridade.
 - **CI/CD (backend):** GitHub Actions roda `pytest` com cobertura em push e PR;
   o **deploy no Render só dispara em push na `main`** (`if: github.event_name ==
   'push'`), nunca em PR. `pip` cacheado e execução única dos testes.
-- **Testes:** 42 no frontend (inclui acessibilidade automatizada com `jest-axe`)
-  e 33 no backend (routers com DB mockado + validação de schemas), com relatório
-  de cobertura (`npm run test:coverage` / `pytest --cov`).
+- **Testes:** 55 no frontend (inclui acessibilidade automatizada com `jest-axe` e
+  os fluxos críticos: chamado público, login, geração de OS e guarda de rota) e
+  47 no backend (endpoints com DB mockado + validação de schemas; inclui testes
+  que comprovam a leitura em lote na listagem de ordens, a `empresa` resolvida no
+  PUT e o relatório retornando 422 para data inválida), com relatório de cobertura
+  (`npm run test:coverage` / `pytest --cov`).
 
 - **Deploy:** Vercel — *preview* automático por PR e produção no merge da
   `main`. `vercel.json` faz o *rewrite* de SPA.
@@ -193,8 +220,9 @@ confirmando a separação perceptual entre os níveis de status/prioridade.
 ## Etapa 3 — Lições aprendidas e iterações futuras
 
 **Decisões acertadas:** padronizar cores em *tokens* CSS permitiu temas
-(alto contraste e daltonismo) com baixíssimo esforço; o hook `useApiData`
-centralizou o tratamento de carregamento/erro; testar funções puras
+(alto contraste e daltonismo) com baixíssimo esforço; a camada de dados com
+React Query (hooks de query/mutation por recurso) centralizou o tratamento de
+carregamento/erro; testar funções puras
 (máscaras/validadores) deu alto retorno com pouco custo.
 
 **Decisões a revisar:** o uso intenso de *estilos inline* dificultou aplicar
@@ -208,7 +236,8 @@ garantir contraste AA sem descaracterizar a identidade visual escura.
 **Próximas iterações:** extrair um componente `Button` único (centralizar
 contraste/foco/estados); adotar `useSyncExternalStore`/design tokens
 formalizados; ampliar testes para fluxos de página; instrumentar os KPIs com
-eventos reais; avaliar *lazy* do Firebase para reduzir o *entry*.
+eventos reais; reduzir ainda mais o JavaScript inicial analisando a composição
+dos *chunks* (ex.: `rollup-plugin-visualizer`).
 
 ---
 
@@ -222,5 +251,5 @@ eventos reais; avaliar *lazy* do Firebase para reduzir o *entry*.
 - [ ] Formulário com máscara/erro inline/campo obrigatório.
 - [ ] `ColdStartBanner`, `ErrorState` (retry) e diálogo de confirmação.
 - [ ] Tamanho do bundle antes × depois (`npm run build`).
-- [ ] Execução dos 35 testes (`npm run test`).
+- [ ] Execução dos testes: 55 no frontend (`npm run test`) e 47 no backend (`pytest`).
 - [ ] Pipeline de CI verde e painel de monitoramento.

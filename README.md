@@ -13,7 +13,7 @@ Interface web desenvolvida em React para gestores e usuários externos do sistem
 - **Firebase 12** — autenticação de gestores (carregado sob demanda)
 - **Axios** — cliente HTTP para comunicação com a API
 - **Lucide React** — biblioteca de ícones
-- **Sentry + web-vitals** — monitoramento de erros e Core Web Vitals (opcional, por env)
+- **Sentry + web-vitals** — monitoramento de erros (Sentry, ativado por `VITE_SENTRY_DSN`) e coleta de Core Web Vitals
 - **Vitest + React Testing Library** — testes unitários e de componentes
 - **ESLint** — linting e qualidade de código
 
@@ -24,14 +24,14 @@ Interface web desenvolvida em React para gestores e usuários externos do sistem
 ### Pré-requisitos
 
 - [Node.js 20](https://nodejs.org/) ou superior
-- Backend [manu-backend](https://github.com/MadsonOl/manu-backend-) rodando localmente ou acessível via URL
+- Backend [manu-backend](https://github.com/MadsonOl/manu-backend) rodando localmente ou acessível via URL
 
 ### Passo a passo
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/MadsonOl/manu-backend-.git
-cd manu-frontend-
+git clone https://github.com/MadsonOl/manu-frontend.git
+cd manu-frontend
 
 # 2. Instale as dependências
 npm install
@@ -58,6 +58,7 @@ A aplicação estará disponível em `http://localhost:5173`.
 | `npm run lint` | Executa o ESLint em todos os arquivos |
 | `npm run test` | Executa os testes uma vez |
 | `npm run test:watch` | Executa os testes em modo watch |
+| `npm run test:coverage` | Executa os testes uma vez com relatório de cobertura |
 
 ---
 
@@ -109,8 +110,8 @@ src/
 │   ├── PageLoader.jsx       # Fallback do code splitting
 │   ├── RouteTitle.jsx       # Título da aba por rota
 │   ├── PrivateRoute.jsx     # Proteção de rotas autenticadas
-│   └── ui/                  # Badge, Breadcrumb, ConfirmDialog, Field,
-│                            # ErrorState, ColdStartBanner, Pagination, etc.
+│   └── ui/                  # Badge, Breadcrumb, ConfirmDialog, Field, ErrorState,
+│                            # ColdStartBanner, Pagination, InputStyles, TableUtils, etc.
 ├── contexts/                # Auth, Toast e Accessibility (provider + hook)
 ├── hooks/                   # Queries/mutations (React Query) por recurso,
 │                            # useSlowHint, useMediaQuery
@@ -137,7 +138,7 @@ src/
 | `/login` | Login | Formulário de login para gestores |
 | `/cadastro` | Cadastro | Formulário de cadastro de novos gestores |
 | `/recuperar-senha` | Recuperar Senha | Envio de e-mail de recuperação de senha |
-| `/abrir-chamado` | Abrir Chamado | Formulário público para abertura de chamados (acessível via link ou QR code) |
+| `/abrir-chamado` | — | Atalho público (link ou QR code) que redireciona para `/`, onde fica o formulário de chamado |
 | `/sobre` | Sobre | Página informativa sobre o sistema manu |
 
 ### Rotas Privadas (requerem autenticação)
@@ -174,7 +175,8 @@ disponível em todas as telas):
   **paletas para daltonismo** (protanopia, deuteranopia, tritanopia,
   acromatopsia), persistidos em `localStorage`.
 - Indicador de **foco visível**, **skip-link**, **títulos por rota**, suporte a
-  **`prefers-reduced-motion`**, nomes acessíveis e alvos de toque ≥ 44px.
+  **`prefers-reduced-motion`**, **anúncio de status/erros** (`aria-live`), **foco
+  preso** em modais e no menu lateral mobile, nomes acessíveis e alvos de toque ≥ 44px.
 - **Tabelas responsivas** (viram cartões no mobile) e **formulários** com label
   associada, indicação de obrigatório e validação de CPF/CNPJ (dígito
   verificador), telefone e e-mail.
@@ -190,8 +192,9 @@ Robustez e operação:
   reduz chamadas e torna a navegação instantânea entre telas que compartilham dados.
 - **Firebase carregado sob demanda** — sai do caminho crítico de renderização,
   acelerando o primeiro paint (sobretudo nas páginas públicas).
-- **Observabilidade opcional**: Sentry (erros) + Web Vitals, ativados por env e
-  sem custo no bundle quando não configurados.
+- **Observabilidade**: erros via Sentry — carregado e ativado apenas quando
+  `VITE_SENTRY_DSN` está definido (sem custo no bundle quando ausente) — e coleta
+  de Core Web Vitals (LCP/INP/CLS/FCP/TTFB).
 - **Testes** com Vitest (`npm run test`). Detalhes do ciclo de evolução em
   [`docs/RELATORIO-TRANSFORMACAO-DIGITAL.md`](docs/RELATORIO-TRANSFORMACAO-DIGITAL.md).
 
@@ -200,8 +203,8 @@ Robustez e operação:
 ## Deploy
 
 - **Plataforma:** [Vercel](https://vercel.com/)
-- **CI/CD:** GitHub Actions valida o build a cada push na branch `main` (`.github/workflows/deploy.yml`)
-- **Deploy automático:** o Vercel detecta o push na branch `main` e realiza o deploy automaticamente
+- **CI:** GitHub Actions roda `lint`, `test:coverage` e `build` em cada push na `main` e em Pull Requests (`.github/workflows/deploy.yml`). O workflow apenas valida — não publica.
+- **Deploy automático:** a integração Git da Vercel publica o push na branch `main` automaticamente.
 - **Configuração:** o arquivo `vercel.json` na raiz contém a regra de rewrite necessária para que o React Router funcione corretamente em produção:
 
 ```json

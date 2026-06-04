@@ -14,7 +14,7 @@ import { inputStyle, labelStyle, handleFocus, handleBlur } from "../components/u
 import Field from "../components/ui/Field";
 import { maskTelefone, maskCPF, onlyDigits } from "../utils/masks";
 import { validarCPF, validarTelefone, validarEmail } from "../utils/validators";
-import { Plus, Trash2, Inbox, Pencil, X } from "lucide-react";
+import { Plus, Trash2, Inbox, Pencil, X, Loader2 } from "lucide-react";
 
 export default function Profissionais() {
   const { data, isLoading, isError, error, refetch } = useProfissionais();
@@ -141,7 +141,7 @@ export default function Profissionais() {
         borderRadius: "var(--radius-lg)", padding: 24, marginBottom: 24,
       }}>
         {erro && (
-          <div style={{
+          <div role="alert" style={{
             background: "var(--alta-bg)", border: "1px solid color-mix(in srgb, var(--alta) 30%, transparent)",
             borderRadius: "var(--radius-md)", padding: "10px 14px",
             fontSize: "var(--fs-13)", color: "var(--alta)", marginBottom: 16,
@@ -177,17 +177,21 @@ export default function Profissionais() {
             </Field>
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 16, alignItems: "center" }}>
-            <button type="submit" style={{
+            <button type="submit" disabled={salvarProfissional.isPending} aria-busy={salvarProfissional.isPending} style={{
               background: "var(--primary-strong)", color: "#fff",
               padding: "8px 16px", borderRadius: "var(--radius-md)",
-              fontSize: "var(--fs-13)", fontWeight: 500, border: "none", cursor: "pointer",
+              fontSize: "var(--fs-13)", fontWeight: 500, border: "none",
+              cursor: salvarProfissional.isPending ? "not-allowed" : "pointer",
+              opacity: salvarProfissional.isPending ? 0.7 : 1,
               transition: "var(--transition)", display: "flex", alignItems: "center", gap: 6,
             }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-dark)"}
+              onMouseEnter={(e) => { if (!salvarProfissional.isPending) e.currentTarget.style.background = "var(--primary-dark)"; }}
               onMouseLeave={(e) => e.currentTarget.style.background = "var(--primary-strong)"}
             >
-              {editando ? <Pencil size={15} /> : <Plus size={15} />}
-              {editando ? "Salvar alterações" : "Cadastrar"}
+              {salvarProfissional.isPending
+                ? <Loader2 size={15} aria-hidden="true" style={{ animation: "spin 1s linear infinite" }} />
+                : (editando ? <Pencil size={15} aria-hidden="true" /> : <Plus size={15} aria-hidden="true" />)}
+              {salvarProfissional.isPending ? "Salvando..." : (editando ? "Salvar alterações" : "Cadastrar")}
             </button>
             {editando && (
               <button type="button" onClick={cancelarEdicao} style={{

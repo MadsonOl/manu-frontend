@@ -33,6 +33,14 @@ export default function Relatorios() {
 
   const totalPages = Math.max(1, Math.ceil(ordensFiltradas.length / perPage));
   const paginated = ordensFiltradas.slice((page - 1) * perPage, page * perPage);
+  // Distingue "sem ordens" de "filtro sem resultado".
+  const semResultadoPorFiltro = ordens.length > 0 && ordensFiltradas.length === 0;
+  function limparFiltros() {
+    setFiltroProfissional("");
+    setFiltroStatus("");
+    setFiltroData("");
+    setPage(1);
+  }
 
   return (
     <div style={{ animation: "fadeIn 0.2s ease" }}>
@@ -107,9 +115,22 @@ export default function Relatorios() {
               ) : isLoading ? <SkeletonRows cols={8} /> : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="8" style={{ padding: 48, textAlign: "center" }}>
-                    <Inbox size={32} style={{ color: "var(--text-3)", marginBottom: 12 }} />
-                    <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhuma OS encontrada</div>
-                    <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>Ajuste os filtros ou aguarde novas ordens</div>
+                    <Inbox size={32} aria-hidden="true" style={{ color: "var(--text-3)", marginBottom: 12 }} />
+                    {semResultadoPorFiltro ? (
+                      <>
+                        <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhuma OS para os filtros aplicados</div>
+                        <button onClick={limparFiltros} className="no-print" style={{
+                          marginTop: 10, background: "none", border: "none",
+                          color: "var(--primary)", cursor: "pointer", textDecoration: "underline",
+                          fontSize: "var(--fs-13)",
+                        }}>Limpar filtros</button>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: "var(--fs-14)", fontWeight: 500, color: "var(--text-2)" }}>Nenhuma OS encontrada</div>
+                        <div style={{ fontSize: "var(--fs-13)", color: "var(--text-3)", marginTop: 4 }}>Ajuste os filtros ou aguarde novas ordens</div>
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : paginated.map((o, i) => (

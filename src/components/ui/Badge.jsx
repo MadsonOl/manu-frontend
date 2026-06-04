@@ -14,7 +14,7 @@ export function PriorityBadge({ value }) {
       fontSize: "var(--fs-11)", fontWeight: 600,
       background: c.bg, color: c.color,
     }}>
-      <c.icon size={11} />
+      <c.icon size={11} aria-hidden="true" />
       {value}
     </span>
   );
@@ -31,8 +31,8 @@ export function StatusBadge({ value }) {
       color: isFinalizado ? "var(--finalizado)" : "var(--atendimento)",
     }}>
       {isFinalizado
-        ? <CheckCircle size={11} />
-        : <Clock size={11} style={{ animation: "pulse 2s ease infinite" }} />
+        ? <CheckCircle size={11} aria-hidden="true" />
+        : <Clock size={11} aria-hidden="true" style={{ animation: "pulse 2s ease infinite" }} />
       }
       {value}
     </span>
